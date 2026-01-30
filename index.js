@@ -31,7 +31,7 @@ app.get('/', async (req, res) => {
         // Generamos la lista de videos con diseño profesional para la tesis
         let listaHtml = data.Contents.map(file => {
             // URL de descarga directa "RAW" (Evita restricciones de la interfaz de Storj)
-            const downloadUrl = `const downloadUrl = `https://link.storjshare.io/s/${jx472hnpgj3skpumg6v5xgfh3eia}/${BUCKET_NAME}/${file.Key}?download=1`;`;
+            const downloadUrl = `const downloadUrl = `= `https://link.storjshare.io/s/${jx472hnpgj3skpumg6v5xgfh3eia}/${BUCKET_NAME}/${file.Key}?download=1`;`;`;
             
             return `
                 <div style="background: rgba(30, 41, 59, 0.7); padding: 20px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px);">
