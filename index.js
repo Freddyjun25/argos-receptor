@@ -15,7 +15,7 @@ const s3 = new AWS.S3({
 });
 
 const BUCKET_NAME = 'videosargos';
-const STORJ_PUBLIC_TOKEN = 'jx472hnpgj3skpumg6v5xgfh3eia'; 
+const STORJ_PUBLIC_TOKEN = 'juif3xjr2h2r7l6r2cshcb3f3ueq'; 
 
 app.use(express.raw({ type: 'application/octet-stream', limit: '20mb' }));
 
@@ -29,8 +29,8 @@ app.get('/', async (req, res) => {
         
         let listaHtml = data.Contents.map(file => {
             // Construcción manual de URLs para evitar errores de plantillas
-            const viewUrl = 'https://link.storjshare.io/raw/' + STORJ_PUBLIC_TOKEN + '/' + BUCKET_NAME + '/' + file.Key;
-            const downloadUrl = 'https://link.storjshare.io/s/' + STORJ_PUBLIC_TOKEN + '/' + BUCKET_NAME + '/' + file.Key + '?download=1';
+             const viewUrl = `https://link.storjshare.io/raw/juif3xjr2h2r7l6r2cshcb3f3ueq/videoargos/${fileName}`;
+             const downloadUrl = `https://link.storjshare.io/s/juif3xjr2h2r7l6r2cshcb3f3ueq/videoargos/${fileName}?download=1`;
             
             return `
                 <div style="background: rgba(30, 41, 59, 0.7); padding: 25px; border-radius: 15px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);">
