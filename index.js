@@ -1,26 +1,42 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const AWS = require('aws-sdk');
 const app = express();
 
-const UPLOAD_DIR = path.join(__dirname, 'videos');
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+// 1. Configurar la conexión a Storj
+const s3 = new AWS.S3({
+    accessKeyId: 'TU_ACCESS_KEY_DE_STORJ',
+    secretAccessKey: 'TU_SECRET_KEY_DE_STORJ',
+    endpoint: 'https://gateway.storjshare.io', // Verifica si el tuyo es diferente
+    s3ForcePathStyle: true,
+    signatureVersion: 'v4',
+    connectTimeout: 0,
+    httpOptions: { timeout: 0 }
+});
 
 app.use(express.raw({ type: 'application/octet-stream', limit: '20mb' }));
-app.use('/ver', express.static(UPLOAD_DIR));
 
-app.get('/', (req, res) => res.send('Servidor ARGOS funcionando 🚀'));
+app.get('/', (req, res) => res.send('ARGOS Cloud con Almacenamiento Persistente Activo 🛡️'));
 
-app.post('/upload', (req, res) => {
+app.post('/upload', async (req, res) => {
     const fileName = req.query.nombre || `argos_${Date.now()}.avi`;
-    const filePath = path.join(UPLOAD_DIR, fileName);
 
-    fs.writeFile(filePath, req.body, (err) => {
-        if (err) return res.status(500).send("Error al guardar");
-        const videoUrl = `https://${req.get('host')}/ver/${fileName}`;
-        res.send(videoUrl);
-    });
+    const params = {
+        Bucket: 'videos-argos', // El nombre del bucket que creaste
+        Key: fileName,
+        Body: req.body,
+        ContentType: 'video/avi',
+        ACL: 'public-read' // Para que el link se pueda ver
+    };
+
+    try {
+        const upload = await s3.upload(params).promise();
+        console.log("✅ Guardado en Storj:", upload.Location);
+        res.send(upload.Location); // Devolvemos el link permanente al ESP32
+    } catch (error) {
+        console.error("❌ Error en Storj:", error);
+        res.status(500).send("Error de almacenamiento");
+    }
 });
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, '0.0.0.0', () => console.log(`Servidor en puerto ${PORT}`));
+app.listen(PORT, () => console.log(`Servidor Blindado en puerto ${PORT}`));
