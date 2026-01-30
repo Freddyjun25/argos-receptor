@@ -1,7 +1,7 @@
 const express = require('express');
 const AWS = require('aws-sdk');
 const app = express();
-
+const fileName = req.query.nombre;
 /**
  * CONFIGURACIÓN DE ACCESO SEGURO (BÓVEDA STORJ)
  * Credenciales S3 para gestión de evidencias
@@ -85,27 +85,21 @@ app.get('/', async (req, res) => {
  * RUTA DE RECEPCIÓN: RECIBE EL BINARIO DEL ESP32
  */
 app.post('/upload', async (req, res) => {
-    const fileName = req.query.nombre || 'evidencia_' + Date.now() + '.avi';
-    
-    const params = {
-        Bucket: BUCKET_NAME,
-        Key: fileName,
-        Body: req.body,
-        ContentType: 'video/avi'
-    };
-
     try {
-        console.log('📦 Subiendo archivo: ' + fileName);
-        await s3.upload(params).promise();
-        const finalUrl = 'https://link.storjshare.io/s/' + STORJ_PUBLIC_TOKEN + '/' + BUCKET_NAME + '/' + fileName + '?download=1';
-        res.send(finalUrl); 
-    } catch (error) {
-        console.error('❌ Error:', error);
-        res.status(500).send(error.message);
-    }
-});
+        // ESTO ES LO QUE DEBES PEGAR:
+        const fileName = req.query.nombre; // Extrae el nombre del ESP32
+        
+        if (!fileName) {
+            return res.status(400).send("Falta el nombre del archivo");
+        }
 
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log('🚀 SERVIDOR ARGOS ONLINE EN PUERTO ' + PORT);
+        const viewUrl = `https://link.storjshare.io/raw/juif3xjr2h2r7l6r2cshcb3f3ueq/videoargos/${fileName}`;
+        const downloadUrl = `https://link.storjshare.io/s/juif3xjr2h2r7l6r2cshcb3f3ueq/videoargos/${fileName}?download=1`;
+
+        // ... aquí sigue el código que sube a Storj y registra en Firebase ...
+        
+    } catch (error) {
+        console.error("Error en la bóveda:", error);
+        res.status(500).send("Error interno: " + error.message);
+    }
 });
