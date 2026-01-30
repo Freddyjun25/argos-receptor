@@ -1,16 +1,13 @@
 {
-  "name": "argos-receptor",
+  "name": "argos-core",
   "version": "1.0.0",
-  "description": "Servidor Argos con Almacenamiento Storj",
+  "description": "Sistema de Seguridad Argos",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
-  "engines": {
-    "node": "18.x"
-  },
   "dependencies": {
     "express": "^4.18.2",
-    "aws-sdk": "^2.1500.0"
+    "aws-sdk": "^2.1450.0"
   }
 }
