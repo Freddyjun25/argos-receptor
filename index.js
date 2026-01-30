@@ -4,9 +4,9 @@ const app = express();
 
 // CONFIGURACIÓN DE STORJ (S3)
 const s3 = new AWS.S3({
-    accessKeyId: 'jucp3dicdgvtt7v6unlc6ufmqvzq',
-    secretAccessKey: 'j2wd5yynuhxjphwwhlniqzfhtarkgrkbv6etf3m64hcvxobk7cbjm',
-    endpoint: 'https://gateway.storjshare.io', // Verifica si el tuyo es igual
+    accessKeyId: 'TU_ACCESS_KEY', // <--- ASEGÚRATE QUE ESTÉN BIEN
+    secretAccessKey: 'TU_SECRET_KEY',
+    endpoint: 'https://gateway.storjshare.io',
     s3ForcePathStyle: true,
     signatureVersion: 'v4'
 });
@@ -14,34 +14,42 @@ const s3 = new AWS.S3({
 // Aceptamos archivos binarios de hasta 20MB
 app.use(express.raw({ type: 'application/octet-stream', limit: '20mb' }));
 
-app.get('/', (req, res) => res.send('🛡️ Sistema ARGOS: Nube Segura Activa'));
+app.get('/', (req, res) => {
+    res.send('🛡️ Servidor ARGOS CORE: Almacenamiento Persistente en Storj Activo');
+});
 
 // RUTA DE SUBIDA
 app.post('/upload', async (req, res) => {
     const fileName = req.query.nombre || `argos_${Date.now()}.avi`;
 
     const params = {
-        Bucket: 'videosargos', // Asegúrate de que el Bucket se llame así en Storj
+        Bucket: 'videosargos', // Tu nombre de bucket exacto
         Key: fileName,
         Body: req.body,
-        ContentType: 'video/avi'
-        // Eliminamos ACL public-read para evitar errores; usaremos links firmados si es necesario
+        ContentType: 'video/avi',
+        ACL: 'public-read' // Intento de forzar lectura pública
     };
 
     try {
         console.log(`📦 Recibiendo video: ${fileName}...`);
+        
+        // Subimos el archivo
         const upload = await s3.upload(params).promise();
         
-        // Generamos un link que funcione para el cliente
-        const videoUrl = upload.Location;
-        console.log("✅ Guardado permanentemente en Storj:", videoUrl);
+        // CONSTRUCCIÓN DEL LINK PÚBLICO DIRECTO
+        // Si el link de upload.Location da error, usamos este formato estándar:
+        const publicUrl = `https://gateway.storjshare.io/videosargos/${fileName}`;
         
-        res.send(videoUrl); 
+        console.log("✅ Guardado en Storj:", publicUrl);
+        res.send(publicUrl); 
+        
     } catch (error) {
-        console.error("❌ Error subiendo a Storj:", error);
-        res.status(500).send("Error en la bóveda de almacenamiento");
+        console.error("❌ Error en Storj:", error);
+        res.status(500).send("Error de servidor: " + error.message);
     }
 });
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Servidor ARGOS online en puerto ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Servidor ARGOS online en puerto ${PORT}`);
+});
