@@ -21,7 +21,7 @@ app.post('/upload', async (req, res) => {
     const fileName = req.query.nombre || `argos_${Date.now()}.avi`;
 
     const params = {
-        Bucket: 'videos-argos', // Asegúrate de que el Bucket se llame así en Storj
+        Bucket: 'videosargos', // Asegúrate de que el Bucket se llame así en Storj
         Key: fileName,
         Body: req.body,
         ContentType: 'video/avi'
