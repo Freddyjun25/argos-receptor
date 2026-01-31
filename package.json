@@ -1,17 +1,12 @@
 {
   "name": "argos-receptor",
   "version": "1.0.0",
-  "description": "Servidor receptor de evidencias para Argos Core",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
     "express": "^4.19.2",
-    "firebase-admin": "^12.1.1",
-    "aws-sdk": "^2.1633.0"
-  },
-  "engines": {
-    "node": "22.x"
+    "@supabase/supabase-client": "^2.43.0"
   }
 }
