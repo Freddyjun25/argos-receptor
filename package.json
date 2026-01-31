@@ -1,16 +1,13 @@
 {
   "name": "argos-receptor",
   "version": "1.0.0",
-  "description": "Sistema Institucional Argos",
+  "description": "Sistema Argos",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
     "express": "^4.19.2",
-    "@supabase/supabase-client": "^2.43.0"
-  },
-  "engines": {
-    "node": ">=22.0.0"
+    "@supabase/supabase-client": "2.43.0"
   }
 }
