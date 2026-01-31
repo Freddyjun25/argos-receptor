@@ -5,8 +5,8 @@
   "scripts": {
     "start": "node index.js"
   },
-  "dependencies": {
-    "express": "^4.19.2",
-    "@supabase/supabase-client": "^2.43.0"
-  }
+ "dependencies": {
+  "express": "^4.19.2",
+  "@supabase/supabase-client": "^2.43.0"
+}
 }
