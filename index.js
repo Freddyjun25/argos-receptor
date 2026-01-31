@@ -4,9 +4,6 @@ const AWS = require('aws-sdk');
 const app = express();
 const port = process.env.PORT || 1000;
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Servidor Argos activo en puerto ${port}`);
-});
 
 // 1. CONFIGURACIÓN FIREBASE
 // Asegúrate de tener tus credenciales en el archivo serviceAccountKey.json
@@ -107,6 +104,6 @@ app.get('/', async (req, res) => {
   res.send(html);
 });
 
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   console.log(`Servidor Argos activo en puerto ${port}`);
 });
