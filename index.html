@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEMA ARGOS CORE - Repositorio de Evidencias</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --azul-argos: #003366; --gris-claro: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--gris-claro); margin: 0; padding: 0; }
+        header { background: var(--azul-argos); color: white; padding: 1.5rem; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .nav-buttons { margin-top: 15px; }
+        .btn-live { background: #d9534f; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; }
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .video-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .video-card video { width: 100%; height: 180px; background: black; }
+        .card-info { padding: 15px; }
+        .actions { display: flex; justify-content: space-between; margin-top: 15px; }
+        .btn-download { background: #28a745; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>SISTEMA ARGOS CORE</h1>
+    <p>Repositorio de Seguridad Institucional</p>
+    <div class="nav-buttons">
+        <a href="http://192.168.0.105" target="_blank" class="btn-live">
+            <i class="fas fa-video"></i> VER CÁMARA EN VIVO
+        </a>
+    </div>
+</header>
+
+<div class="container">
+    <h2 id="status">Cargando evidencias...</h2>
+    <div class="video-grid" id="video-container"></div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://hetdxozttecuwhpuzktk.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_mrL-JvX6tkNStsgLQ4GJyw_uH0mxAHs"; 
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function cargarEvidencias() {
+        const { data, error } = await _supabase
+            .from('alertas')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            document.getElementById('status').innerText = "Error al conectar.";
+            return;
+        }
+
+        const container = document.getElementById('video-container');
+        container.innerHTML = '';
+        document.getElementById('status').innerText = data.length > 0 ? "Alertas Recientes" : "No hay alertas registradas";
+
+        data.forEach(alerta => {
+            const card = document.createElement('div');
+            card.className = 'video-card';
+            card.innerHTML = `
+                <video controls><source src="${alerta.url_video}" type="video/mp4"></video>
+                <div class="card-info">
+                    <h3>${alerta.nombre_archivo}</h3>
+                    <p>${new Date(alerta.fecha).toLocaleString()}</p>
+                    <div class="actions">
+                        <a href="${alerta.url_video}" download class="btn-download">Descargar</a>
+                    </div>
+                </div>`;
+            container.appendChild(card);
+        });
+    }
+    cargarEvidencias();
+</script>
+</body>
+</html>
