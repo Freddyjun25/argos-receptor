@@ -1,44 +1,56 @@
 const express = require('express');
-const { createClient } = require('@supabase/supabase-client');
+const { createClient } = require('@supabase/supabase-js');
 const app = express();
 
-// Render leerá las variables que pusiste en el paso anterior
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+// Aumentamos el límite para videos de alta calidad
+app.use(express.raw({ type: 'video/mp4', limit: '100mb' }));
 
-// Configuración para recibir videos de hasta 50MB
-app.use(express.raw({ type: 'video/mp4', limit: '50mb' }));
+// Conexión segura con Supabase (Variables de entorno)
+const supabaseURL = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabase = createClient(supabaseURL, supabaseKey);
 
 app.post('/upload', async (req, res) => {
-    const fileName = `EVIDENCIA_${Date.now()}.mp4`;
+    // Generamos un nombre profesional con fecha y hora
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const fileName = `EVIDENCIA_ARGOS_${timestamp}.mp4`;
 
     try {
-        // 1. Sube el video al Storage de Supabase
-        const { data: storageData, error: storageError } = await supabase.storage
+        console.log(`📥 Recibiendo alerta: ${fileName}`);
+
+        // 1. Subir video al Repositorio Seguro (Storage)
+        const { error: storageError } = await supabase.storage
             .from('EVIDENCIAS')
             .upload(fileName, req.body, { contentType: 'video/mp4', upsert: true });
 
-        if (storageError) throw storageError;
+        if (storageError) throw new Error(`Storage Error: ${storageError.message}`);
 
-        // 2. Crea el enlace para ver el video
-        const { data: urlData } = supabase.storage.from('EVIDENCIAS').getPublicUrl(fileName);
+        // 2. Obtener el enlace público (Para ver y descargar)
+        const { data: urlData } = supabase.storage
+            .from('EVIDENCIAS')
+            .getPublicUrl(fileName);
 
-        // 3. Guarda el registro en tu tabla de alertas
+        // 3. Registrar el evento en la Base de Datos (Para tu historial)
         const { error: dbError } = await supabase
             .from('alertas')
             .insert([{ 
                 nombre_archivo: fileName, 
-                url_video: urlData.publicUrl 
+                url_video: urlData.publicUrl,
+                fecha: new Date(),
+                estado: 'Revisión Pendiente' // Ideal para uso institucional
             }]);
 
-        if (dbError) throw dbError;
+        if (dbError) throw new Error(`Database Error: ${dbError.message}`);
 
-        console.log(`✅ ¡Éxito! Video guardado como: ${fileName}`);
-        res.status(200).send('Video procesado correctamente');
+        console.log('✅ Alerta procesada y archivada correctamente.');
+        res.status(200).send('Archivado Exitoso');
+
     } catch (err) {
-        console.error('❌ Error en el proceso:', err.message);
+        console.error('❌ Error Crítico:', err.message);
         res.status(500).send(err.message);
     }
 });
 
+// Puerto dinámico para estabilidad en la nube
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, '0.0.0.0', () => console.log(`Servidor Argos activo en puerto ${PORT}`));
+app.listen(PORT, () => console.log(`🛡️ Sistema Argos Institucional Activo en puerto ${PORT}`));
