@@ -27,7 +27,7 @@ app.post('/upload', async (req, res) => {
 
         // 2. Obtener el enlace público (Para ver y descargar)
         const { data: urlData } = supabase.storage
-            .from('EVIDENCIAS')
+            .from('videos-receptor')
             .getPublicUrl(fileName);
 
         // 3. Registrar el evento en la Base de Datos (Para tu historial)
