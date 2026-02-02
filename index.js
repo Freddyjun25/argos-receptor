@@ -20,7 +20,7 @@ app.post('/upload', async (req, res) => {
 
         // 1. Subir video al Repositorio Seguro (Storage)
         const { error: storageError } = await supabase.storage
-            .from('EVIDENCIAS')
+            .from('videos-receptor')
             .upload(fileName, req.body, { contentType: 'video/mp4', upsert: true });
 
         if (storageError) throw new Error(`Storage Error: ${storageError.message}`);
