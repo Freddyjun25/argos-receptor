@@ -39,41 +39,28 @@
 </div>
 
 <script>
-    const SUPABASE_URL = "https://hetdxozttecuwhpuzktk.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_mrL-JvX6tkNStsgLQ4GJyw_uH0mxAHs"; 
+    const SUPABASE_URL = "https://hetdxozttqcuwhpuzktk.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldGR4b3p0dHFjdXdocHV6a3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4MjA4MDksImV4cCI6MjA4NTM5NjgwOX0.EMMWoEBvlJYXyT0e4dVFNYSFHmAJwx-U_dKq-lmEGOM"; 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     async function cargarEvidencias() {
         const { data, error } = await _supabase
             .from('alertas')
             .select('*')
-            .order('created_at', { ascending: false });
+            .order('fecha', { ascending: false }); // <-- CAMBIADO DE created_at A fecha
 
         if (error) {
+            console.error("Error detallado:", error); // Esto te dirá el error real en F12
             document.getElementById('status').innerText = "Error al conectar.";
             return;
         }
 
         const container = document.getElementById('video-container');
         container.innerHTML = '';
-        document.getElementById('status').innerText = data.length > 0 ? "Alertas Recientes" : "No hay alertas registradas";
+        
+        if (!data || data.length === 0) {
+            document.getElementById('status').innerText = "No hay alertas registradas";
+            return;
+        }
 
-        data.forEach(alerta => {
-            const card = document.createElement('div');
-            card.className = 'video-card';
-            card.innerHTML = `
-                <video controls><source src="${alerta.url_video}" type="video/mp4"></video>
-                <div class="card-info">
-                    <h3>${alerta.nombre_archivo}</h3>
-                    <p>${new Date(alerta.fecha).toLocaleString()}</p>
-                    <div class="actions">
-                        <a href="${alerta.url_video}" download class="btn-download">Descargar</a>
-                    </div>
-                </div>`;
-            container.appendChild(card);
-        });
-    }
-    cargarEvidencias();
-</script>
-</body>
-</html>
+        document.getElementById('status').innerText = "Alertas Recientes";
