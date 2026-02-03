@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SISTEMA ARGOS - Inteligencia de Seguridad</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
             --azul-argos: #003366;
             --azul-claro: #004a94;
-            --verde-descarga: #28a745;
+            --verde-kpi: #28a745;
             --rojo-alerta: #d9534f;
             --fondo: #f0f2f5;
         }
@@ -18,111 +18,104 @@
 
         header {
             background: linear-gradient(135deg, var(--azul-argos) 0%, var(--azul-claro) 100%);
-            color: white; padding: 25px 30px; text-align: center;
+            color: white; padding: 20px 30px; text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative;
         }
 
         .btn-logout {
             position: absolute; right: 30px; top: 50%; transform: translateY(-50%);
             background: rgba(255, 255, 255, 0.15); color: white; border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem;
-            transition: 0.3s; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(5px);
+            padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: 0.3s;
         }
-        .btn-logout:hover { background: white; color: var(--azul-argos); }
+
+        /* ----- DASHBOARD ESTADÍSTICO ----- */
+        .analytics-container {
+            max-width: 1200px; margin: 20px auto; padding: 20px;
+            background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: none; /* Oculto por defecto */
+        }
+        .kpi-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px; margin-bottom: 30px;
+        }
+        .kpi-card {
+            background: #f8f9fa; padding: 20px; border-radius: 10px; border-bottom: 4px solid var(--azul-argos);
+            text-align: center;
+        }
+        .kpi-card h3 { margin: 0; font-size: 0.8rem; color: #666; text-transform: uppercase; }
+        .kpi-card p { margin: 10px 0 0; font-size: 1.8rem; font-weight: bold; color: var(--azul-argos); }
+
+        .charts-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px;
+        }
+        .chart-box { min-height: 250px; }
 
         /* ----- TOOLBAR ----- */
         .toolbar {
             max-width: 1200px; margin: 20px auto; padding: 15px 25px;
             background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between;
+            display: flex; flex-wrap: wrap; gap: 15px; align-items: center;
         }
-        .search-box { flex: 1; min-width: 250px; position: relative; }
-        .search-box input {
-            width: 100%; padding: 10px 40px; border-radius: 8px; border: 1px solid #ddd; outline: none;
+        .btn-stats {
+            background: var(--azul-argos); color: white; border: none; padding: 10px 15px;
+            border-radius: 8px; cursor: pointer; transition: 0.3s; font-weight: bold;
         }
+        .btn-stats:hover { background: var(--azul-claro); }
+
+        .search-box { flex: 1; min-width: 200px; position: relative; }
+        .search-box input { width: 100%; padding: 10px 40px; border-radius: 8px; border: 1px solid #ddd; outline: none; }
         .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #888; }
 
-        .view-toggle { display: flex; background: #eee; border-radius: 8px; padding: 4px; }
-        .view-btn { border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; color: #666; transition: 0.3s; }
-        .view-btn.active { background: white; color: var(--azul-argos); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-
-        /* ----- CONTENEDOR Y GRID ----- */
+        /* ----- VIDEO GRID ----- */
         .container { max-width: 1200px; margin: 0 auto 30px; padding: 0 20px; }
-        .date-section { margin-bottom: 40px; }
-        .date-header {
-            color: var(--azul-argos); font-size: 1rem; margin-bottom: 20px;
-            display: flex; align-items: center; gap: 10px; padding-left: 10px; border-left: 4px solid var(--azul-claro);
-        }
-
+        .date-section { margin-bottom: 30px; }
+        .date-header { color: var(--azul-argos); font-size: 1rem; border-left: 4px solid var(--azul-claro); padding-left: 10px; margin-bottom: 15px; }
         .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-
-        /* MODO LISTA */
-        .video-grid.list-mode { grid-template-columns: 1fr; }
-        .video-grid.list-mode .card { display: flex; flex-direction: row; height: 100px; }
-        .video-grid.list-mode .card video { width: 160px; height: 100px; }
-        .video-grid.list-mode .card .info { flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
-        .video-grid.list-mode .btn-group { position: static; transform: none; }
-
-        /* TARJETA POP */
-        .card {
-            background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            overflow: hidden; position: relative; transition: all 0.3s ease;
-        }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; position: relative; }
         video { width: 100%; height: 160px; background: #000; display: block; object-fit: cover; }
-        
-        .info { padding: 15px; }
-        .info h4 { margin: 0 0 5px 0; color: var(--azul-argos); font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .info-item { color: #666; font-size: 0.75rem; }
+        .info { padding: 12px; }
+        .info h4 { margin: 0 0 5px 0; font-size: 0.85rem; color: var(--azul-argos); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .btn-group { display: flex; gap: 8px; margin-top: 10px; }
+        .action-btn { flex: 1; padding: 8px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.8rem; }
+        .btn-dl { background: #eef2f7; color: var(--azul-claro); }
+        .btn-del { background: #fff5f5; color: var(--rojo-alerta); }
 
-        /* GRUPO DE BOTONES */
-        .btn-group {
-            position: absolute; bottom: 12px; right: 12px; display: flex; gap: 8px;
-        }
-
-        .action-btn {
-            width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            border: none; cursor: pointer; transition: 0.2s; font-size: 0.85rem;
-        }
-        
-        .btn-download { background: var(--azul-claro); color: white; }
-        .btn-download:hover { background: var(--azul-argos); transform: scale(1.1); }
-        
-        .btn-delete { background: #fff; color: var(--rojo-alerta); border: 1px solid #ffcccc; }
-        .btn-delete:hover { background: var(--rojo-alerta); color: white; transform: scale(1.1); }
-
-        @media (max-width: 768px) {
-            .toolbar { flex-direction: column; }
-            .video-grid.list-mode .card { flex-direction: column; height: auto; }
-            .video-grid.list-mode .card video { width: 100%; }
-        }
+        @media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <header>
         <h1>SISTEMA ARGOS CORE</h1>
-        <p>REPOSITORIO DE EVIDENCIAS DIGITALES</p>
-        <button class="btn-logout" onclick="cerrarSesion()">
-            <i class="fas fa-power-off"></i> SALIR
-        </button>
+        <p>REPOSITORIO DE INTELIGENCIA Y SEGURIDAD</p>
+        <button class="btn-logout" onclick="cerrarSesion()">SALIR</button>
     </header>
 
     <div class="toolbar">
+        <button class="btn-stats" onclick="toggleStats()">
+            <i class="fas fa-chart-bar"></i> VER ESTADÍSTICAS
+        </button>
         <div class="search-box">
             <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Buscar video..." onkeyup="filtrar()">
+            <input type="text" id="searchInput" placeholder="Filtrar evidencias..." onkeyup="filtrar()">
         </div>
-        <div style="display: flex; gap: 15px;">
-            <input type="date" id="dateFilter" style="padding:8px; border-radius:8px; border:1px solid #ddd;" onchange="filtrar()">
-            <div class="view-toggle">
-                <button class="view-btn active" id="gridBtn" onclick="cambiarVista('grid')"><i class="fas fa-th-large"></i></button>
-                <button class="view-btn" id="listBtn" onclick="cambiarVista('list')"><i class="fas fa-list"></i></button>
-            </div>
+        <input type="date" id="dateFilter" style="padding:9px; border-radius:8px; border:1px solid #ddd;" onchange="filtrar()">
+    </div>
+
+    <div class="analytics-container" id="statsPanel">
+        <div class="kpi-grid">
+            <div class="kpi-card"><h3>Total Videos</h3><p id="stat-total">0</p></div>
+            <div class="kpi-card"><h3>Alertas Hoy</h3><p id="stat-today">0</p></div>
+            <div class="kpi-card"><h3>Hora Pico</h3><p id="stat-peak">--:--</p></div>
+        </div>
+        <div class="charts-grid">
+            <div class="chart-box"><canvas id="lineChart"></canvas></div>
+            <div class="chart-box"><canvas id="barChart"></canvas></div>
         </div>
     </div>
 
     <div class="container">
-        <h3 id="msg">Sincronizando con ARGOS...</h3>
+        <h3 id="msg">Sincronizando...</h3>
         <div id="main-content"></div>
     </div>
 
@@ -135,17 +128,27 @@
         );
 
         let todasLasAlertas = [];
-        let vistaActual = 'grid';
+        let charts = {};
+
+        function toggleStats() {
+            const panel = document.getElementById('statsPanel');
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+            if (panel.style.display === 'block') procesarEstadisticas();
+        }
 
         async function cargar() {
             const { data, error } = await _supabase.from('alertas').select('*').order('fecha', { ascending: false });
-            if (!error) { todasLasAlertas = data; renderizar(todasLasAlertas); }
+            if (!error) {
+                todasLasAlertas = data;
+                renderizar(todasLasAlertas);
+                if (document.getElementById('statsPanel').style.display === 'block') procesarEstadisticas();
+            }
         }
 
         function renderizar(alertas) {
-            const mainContent = document.getElementById('main-content');
-            mainContent.innerHTML = '';
-            document.getElementById('msg').innerText = alertas.length > 0 ? `${alertas.length} archivos encontrados` : "Sin resultados";
+            const main = document.getElementById('main-content');
+            main.innerHTML = '';
+            document.getElementById('msg').innerText = alertas.length > 0 ? `Mostrando ${alertas.length} registros` : "Sin resultados";
 
             const grupos = {};
             alertas.forEach(item => {
@@ -156,49 +159,96 @@
 
             for (const [fecha, videos] of Object.entries(grupos)) {
                 let section = `<div class="date-section">
-                    <h4 class="date-header"><i class="far fa-calendar-alt"></i> ${fecha.toUpperCase()}</h4>
-                    <div class="video-grid ${vistaActual === 'list' ? 'list-mode' : ''}">`;
-                
+                    <h4 class="date-header">${fecha.toUpperCase()}</h4>
+                    <div class="video-grid">`;
                 videos.forEach(item => {
-                    const hora = new Date(item.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     section += `
                         <div class="card" id="card-${item.id}">
-                            <video controls preload="metadata" src="${item.url_video}#t=0.5"></video>
+                            <video preload="metadata" src="${item.url_video}#t=0.5" controls></video>
                             <div class="info">
-                                <div>
-                                    <h4 title="${item.nombre_archivo}">${item.nombre_archivo}</h4>
-                                    <div class="info-item"><i class="far fa-clock"></i> ${hora}</div>
-                                </div>
+                                <h4 title="${item.nombre_archivo}">${item.nombre_archivo}</h4>
                                 <div class="btn-group">
-                                    <button class="action-btn btn-download" onclick="descargarVideo('${item.url_video}', '${item.nombre_archivo}')" title="Descargar">
-                                        <i class="fas fa-download"></i>
-                                    </button>
-                                    <button class="action-btn btn-delete" onclick="eliminar(${item.id}, '${item.nombre_archivo}')" title="Eliminar">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
+                                    <button class="action-btn btn-dl" onclick="descargarVideo('${item.url_video}', '${item.nombre_archivo}')"><i class="fas fa-download"></i></button>
+                                    <button class="action-btn btn-del" onclick="eliminar(${item.id}, '${item.nombre_archivo}')"><i class="fas fa-trash"></i></button>
                                 </div>
                             </div>
                         </div>`;
                 });
                 section += `</div></div>`;
-                mainContent.innerHTML += section;
+                main.innerHTML += section;
             }
         }
 
-        // FUNCIÓN DE DESCARGA PROFESIONAL
+        // --- CEREBRO ESTADÍSTICO ---
+        function procesarEstadisticas() {
+            const total = todasLasAlertas.length;
+            const hoy = new Date().toISOString().split('T')[0];
+            const alertasHoy = todasLasAlertas.filter(a => a.fecha.startsWith(hoy)).length;
+
+            const horas = Array(24).fill(0);
+            const diasSemana = { 'Lun': 0, 'Mar': 0, 'Mié': 0, 'Jue': 0, 'Vie': 0, 'Sáb': 0, 'Dom': 0 };
+            const nombresDias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+            todasLasAlertas.forEach(a => {
+                const fecha = new Date(a.fecha);
+                horas[fecha.getHours()]++;
+                const nombreDia = nombresDias[fecha.getDay()];
+                if (diasSemana[nombreDia] !== undefined) diasSemana[nombreDia]++;
+            });
+
+            const horaPico = horas.indexOf(Math.max(...horas));
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-today').innerText = alertasHoy;
+            document.getElementById('stat-peak').innerText = `${horaPico}:00`;
+
+            renderizarGraficas(Object.keys(diasSemana), Object.values(diasSemana), horas);
+        }
+
+        function renderizarGraficas(labelsDias, datosDias, datosHoras) {
+            // Limpiar gráficas anteriores si existen
+            if (charts.line) charts.line.destroy();
+            if (charts.bar) charts.bar.destroy();
+
+            const ctxLine = document.getElementById('lineChart').getContext('2d');
+            charts.line = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: labelsDias,
+                    datasets: [{
+                        label: 'Alertas por Día',
+                        data: datosDias,
+                        borderColor: '#004a94',
+                        backgroundColor: 'rgba(0, 74, 148, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            charts.bar = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}h`),
+                    datasets: [{
+                        label: 'Alertas por Hora',
+                        data: datosHoras,
+                        backgroundColor: '#003366'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
         async function descargarVideo(url, nombre) {
-            try {
-                const res = await fetch(url);
-                const blob = await res.blob();
-                const link = document.createElement('a');
-                link.href = window.URL.createObjectURL(blob);
-                link.download = nombre;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            } catch (err) {
-                alert("Error al descargar el video.");
-            }
+            const res = await fetch(url);
+            const blob = await res.blob();
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = nombre;
+            link.click();
         }
 
         function filtrar() {
@@ -206,17 +256,10 @@
             const f = document.getElementById('dateFilter').value;
             const filtradas = todasLasAlertas.filter(a => {
                 const cNombre = a.nombre_archivo.toLowerCase().includes(t);
-                const cFecha = f ? new Date(a.fecha).toISOString().split('T')[0] === f : true;
+                const cFecha = f ? a.fecha.startsWith(f) : true;
                 return cNombre && cFecha;
             });
             renderizar(filtradas);
-        }
-
-        function cambiarVista(modo) {
-            vistaActual = modo;
-            document.getElementById('gridBtn').classList.toggle('active', modo === 'grid');
-            document.getElementById('listBtn').classList.toggle('active', modo === 'list');
-            renderizar(todasLasAlertas);
         }
 
         async function cerrarSesion() {
@@ -226,7 +269,7 @@
         }
 
         async function eliminar(id, nombre) {
-            if (!confirm(`¿Borrar permanentemente?`)) return;
+            if (!confirm(`¿Borrar evidencia?`)) return;
             await _supabase.from('alertas').delete().eq('id', id);
             await _supabase.storage.from('videos-receptor').remove([nombre]);
             cargar();
