@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEMA ARGOS CORE - Repositorio de Evidencias</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --azul-argos: #003366; --gris-claro: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--gris-claro); margin: 0; padding: 0; }
+        header { background: var(--azul-argos); color: white; padding: 1.5rem; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .nav-buttons { margin-top: 15px; }
+        .btn-live { background: #d9534f; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; }
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .video-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .video-card video { width: 100%; height: 180px; background: black; }
+        .card-info { padding: 15px; }
+        .actions { display: flex; justify-content: space-between; margin-top: 15px; }
+        .btn-download { background: #28a745; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>SISTEMA ARGOS CORE</h1>
+    <p>Repositorio de Seguridad Institucional</p>
+    <div class="nav-buttons">
+        <a href="http://192.168.0.105" target="_blank" class="btn-live">
+            <i class="fas fa-video"></i> VER CÁMARA EN VIVO
+        </a>
+    </div>
+</header>
+
+<div class="container">
+    <h2 id="status">Cargando evidencias...</h2>
+    <div class="video-grid" id="video-container"></div>
+</div>
+
+<script>
+    // Configuración de Supabase
+    const SUPABASE_URL = "https://hetdxozttqcuwhpuzktk.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldGR4b3p0dHFjdXdocHV6a3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4MjA4MDksImV4cCI6MjA4NTM5NjgwOX0.EMMWoEBvlJYXyT0e4dVFNYSFHmAJwx-U_dKq-lmEGOM"; 
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function cargarEvidencias() {
+        const { data, error } = await _supabase
+            .from('alertas')
+            .select('*')
+            .order('fecha', { ascending: false });
+
+        const statusLabel = document.getElementById('status');
+        const container = document.getElementById('video-container');
+
+        if (error) {
+            console.error("Error en Supabase:", error);
+            statusLabel.innerText = "Error al conectar con la base de datos.";
+            return;
+        }
+
+        container.innerHTML = '';
+        
+        if (!data || data.length === 0) {
+            statusLabel.innerText = "No hay alertas registradas actualmente.";
+            return;
+        }
+
+        statusLabel.innerText = "Alertas de Seguridad Recientes";
+
+        data.forEach(alerta => {
+            const card = document.createElement('div');
+            card.className = 'video-card';
+            card.innerHTML = `
+                <video controls preload="metadata">
+                    <source src="${alerta.url_video}" type="video/mp4">
+                    Tu navegador no soporta videos.
+                </video>
+                <div class="card-info">
+                    <h3 style="font-size: 1rem; color: #333;">${alerta.nombre_archivo}</h3>
+                    <p style="color: #666; font-size: 0.85rem;">
+                        <i class="far fa-calendar-alt"></i> ${new Date(alerta.fecha).toLocaleString()}
+                    </p>
+                    <p style="color: #d9534f; font-weight: bold; font-size: 0.85rem;">
+                        Estado: ${alerta.estado || 'Pendiente'}
+                    </p>
+                    <div class="actions">
+                        <a href="${alerta.url_video}" target="_blank" download class="btn-download">
+                            <i class="fas fa-download"></i> Descargar
+                        </a>
+                    </div>
+                </div>`;
+            container.appendChild(card);
+        });
+    }
+
+    // Ejecutar al cargar la página
+    cargarEvidencias();
+
+    // Actualizar automáticamente cada 30 segundos
+    setInterval(cargarEvidencias, 30000);
+</script>
+</body>
+</html>
