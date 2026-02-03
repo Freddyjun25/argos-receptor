@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARGOS - Inicio de Sesión</title>
+    <title>ARGOS - Seguridad Institucional</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
             --azul-rey: #004182;
+            --azul-glow: #0056ad;
             --azul-oscuro: #0a0e14;
             --texto-brillante: #e0e0e0;
         }
@@ -21,81 +22,151 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            overflow: hidden;
         }
         .login-card {
             background: rgba(255, 255, 255, 0.03);
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0, 65, 130, 0.3);
-            border: 1px solid rgba(0, 65, 130, 0.5);
+            box-shadow: 0 0 30px rgba(0, 65, 130, 0.2);
+            border: 1px solid rgba(0, 65, 130, 0.3);
             width: 100%;
             max-width: 380px;
             text-align: center;
+            backdrop-filter: blur(10px);
         }
-        .logo { font-size: 3rem; color: var(--azul-rey); margin-bottom: 10px; }
-        h1 { margin-bottom: 30px; font-weight: 300; letter-spacing: 2px; }
-        .input-group { margin-bottom: 20px; text-align: left; }
+        .logo { font-size: 3.5rem; color: var(--azul-rey); margin-bottom: 10px; filter: drop-shadow(0 0 10px var(--azul-rey)); }
+        h1 { margin-bottom: 30px; font-weight: 300; letter-spacing: 3px; font-size: 1.5rem; }
+        
+        .input-group { margin-bottom: 20px; text-align: left; position: relative; }
+        label { font-size: 0.8rem; color: #888; margin-left: 5px; }
+        
         input {
             width: 100%;
             padding: 12px;
             margin-top: 5px;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.07) !important; /* Fuerza el color oscuro */
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
-            color: white;
+            border-radius: 8px;
+            color: white !important;
             box-sizing: border-box;
-        }
-        input:focus { outline: none; border-color: var(--azul-rey); }
-        button {
-            width: 100%;
-            padding: 12px;
-            background: var(--azul-rey);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
             transition: 0.3s;
         }
-        button:hover { background: #0056ad; }
-        #error-msg { color: #ff4d4d; margin-top: 15px; font-size: 0.9rem; }
+        
+        /* Arregla el color blanco del autocompletado de Chrome */
+        input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 30px #121820 inset !important;
+            -webkit-text-fill-color: white !important;
+        }
+
+        input:focus { outline: none; border-color: var(--azul-rey); box-shadow: 0 0 10px rgba(0, 65, 130, 0.4); }
+
+        /* Contenedor del ojito */
+        .pass-wrapper { position: relative; }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #666;
+            transition: 0.3s;
+        }
+        .toggle-password:hover { color: var(--azul-rey); }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(45deg, var(--azul-rey), var(--azul-glow));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 65, 130, 0.4); }
+        button:active { transform: translateY(0); }
+
+        #error-msg { color: #ff4d4d; margin-top: 15px; font-size: 0.85rem; height: 20px; opacity: 0; transition: 0.3s; }
+        
+        .loader { display: none; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid var(--azul-rey); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     <div class="login-card">
         <div class="logo"><i class="fas fa-shield-halved"></i></div>
         <h1>ARGOS CORE</h1>
+        
         <div class="input-group">
-            <label>Correo Institucional</label>
-            <input type="email" id="email" placeholder="usuario@institucion.edu">
+            <label>CORREO INSTITUCIONAL</label>
+            <input type="email" id="email" placeholder="usuario@argos.com" autocomplete="email">
         </div>
+        
         <div class="input-group">
-            <label>Contraseña</label>
-            <input type="password" id="password" placeholder="••••••••">
+            <label>CONTRASEÑA</label>
+            <div class="pass-wrapper">
+                <input type="password" id="password" placeholder="••••••••">
+                <i class="fas fa-eye toggle-password" id="eyeIcon" onclick="togglePass()"></i>
+            </div>
         </div>
-        <button onclick="login()">ACCEDER AL SISTEMA</button>
+        
+        <button id="loginBtn" onclick="login()">
+            <span id="btnText">ACCEDER AL SISTEMA</span>
+            <div id="loader" class="loader"></div>
+        </button>
+        
         <p id="error-msg"></p>
     </div>
 
     <script>
-        const _supabase = supabase.createClient("https://evnfyrkpfvlonlfkhbkr.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk");
+        const _supabase = supabase.createClient(
+            "https://evnfyrkpfvlonlfkhbkr.supabase.co", 
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk"
+        );
+
+        function togglePass() {
+            const passInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                eyeIcon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                passInput.type = 'password';
+                eyeIcon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
 
         async function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const msg = document.getElementById('error-msg');
+            const btnText = document.getElementById('btnText');
+            const loader = document.getElementById('loader');
+
+            // Mostrar carga
+            btnText.style.display = 'none';
+            loader.style.display = 'block';
+            msg.style.opacity = '0';
 
             const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
 
             if (error) {
-                msg.innerText = "Acceso denegado: Datos incorrectos";
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    btnText.style.display = 'block';
+                    msg.innerText = "Acceso denegado: Credenciales no válidas";
+                    msg.style.opacity = '1';
+                }, 800);
             } else {
-                // Guardamos la sesión y entramos
                 localStorage.setItem('argos_session', data.session.access_token);
                 window.location.href = "index.html";
             }
         }
     </script>
 </body>
-
 </html>
