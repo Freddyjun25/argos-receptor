@@ -30,7 +30,7 @@
 
     <script>
         // USA TU URL Y TU LLAVE ANON AQUÍ
-        const _supabase = supabase.createClient("https://hetdxozttqcuwhpuzktk.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldGR4b3p0dHFjdXdocHV6a3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4MjA4MDksImV4cCI6MjA4NTM5NjgwOX0.EMMWoEBvlJYXyT0e4dVFNYSFHmAJwx-U_dKq-lmEGOM");
+        const _supabase = supabase.createClient("https://evnfyrkpfvlonlfkhbkr.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk");
 
         async function cargar() {
             const { data, error } = await _supabase.from('alertas').select('*').order('fecha', { ascending: false });
@@ -58,3 +58,4 @@
     </script>
 </body>
 </html>
+
