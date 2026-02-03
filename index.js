@@ -9,9 +9,9 @@ app.use(express.raw({ type: 'video/mp4', limit: '100mb' }));
 // Servir la carpeta "public" para la interfaz visual
 app.use(express.static(path.join(__dirname, 'public')));
 
-// CONEXIÓN CORREGIDA
+// CONEXIÓN ACTUALIZADA CON LA NUEVA URL
 const supabase = createClient(
-    "https://hetdxozttqcuwhpuzktk.supabase.co", 
+    "https://evnfyrkpfvlonlfkhbkr.supabase.co", 
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldGR4b3p0dHFjdXdocHV6a3RrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTgyMDgwOSwiZXhwIjoyMDg1Mzk2ODA5fQ.0JjvC4PhruTSwdab0l56vKeVlHqa-Ix6o9mkBmaacko"
 );
 
