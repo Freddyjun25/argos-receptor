@@ -1,27 +1,41 @@
+const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
-const fs = require('fs');
+const path = require('path');
+const app = express();
 
-// Credenciales de Supabase (Las sacas de Settings -> API en Supabase)
-const supabase = createClient('https://evnfyrkpfvlonlfkhbkr.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk');
+app.use(express.raw({ type: 'video/mp4', limit: '100mb' }));
+app.use(express.static('public')); // Esto servirá tu página web
 
-app.post('/upload', upload.single('video'), async (req, res) => {
-    const file = req.file;
-    const fileName = `evidencia_${Date.now()}.mp4`;
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-    // Leer el archivo temporal
-    const fileContent = fs.readFileSync(file.path);
-
-    // Subir a Supabase Storage
-    const { data, error } = await supabase
-        .storage
-        .from('videos-receptor') // El nombre de tu bucket
-        .upload(fileName, fileContent, {
-            contentType: 'video/mp4'
-        });
-
-    if (error) {
-        return res.status(500).send("Error subiendo video");
-    }
-
-    res.send("Video guardado en la nube segura");
+// Ruta para ver la página web
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+// Ruta para recibir videos
+app.post('/upload', async (req, res) => {
+    const fileName = `ARGOS_${Date.now()}.mp4`;
+    try {
+        const { error: storageError } = await supabase.storage
+            .from('videos-receptor')
+            .upload(fileName, req.body, { contentType: 'video/mp4' });
+
+        if (storageError) throw storageError;
+
+        const { data: urlData } = supabase.storage.from('videos-receptor').getPublicUrl(fileName);
+
+        await supabase.from('alertas').insert([{ 
+            nombre_archivo: fileName, 
+            url_video: urlData.publicUrl,
+            fecha: new Date()
+        }]);
+
+        res.status(200).send('Archivado Exitoso');
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`Sistema Argos centralizado en puerto ${PORT}`));
