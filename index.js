@@ -2,7 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 
 // Credenciales de Supabase (Las sacas de Settings -> API en Supabase)
-const supabase = createClient('TU_SUPABASE_URL', 'TU_SUPABASE_KEY');
+const supabase = createClient('https://evnfyrkpfvlonlfkhbkr.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk');
 
 app.post('/upload', upload.single('video'), async (req, res) => {
     const file = req.file;
