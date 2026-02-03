@@ -1,7 +1,6 @@
 {
   "name": "argos-sistema-institucional",
   "version": "1.0.0",
-  "description": "Servidor central de seguridad Argos",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
