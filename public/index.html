@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA ARGOS - Centro de Comando</title>
+    <title>SISTEMA ARGOS - Inteligencia de Seguridad</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -12,138 +12,86 @@
             --azul-claro: #004a94;
             --rojo-alerta: #d9534f;
             --fondo: #f0f2f5;
-            --texto-gris: #555;
         }
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--fondo); margin: 0; color: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; color: #333; }
 
-        /* ----- HEADER MEJORADO ----- */
         header {
             background: linear-gradient(135deg, var(--azul-argos) 0%, var(--azul-claro) 100%);
-            color: white;
-            padding: 25px 30px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            position: relative;
-            border-bottom: 3px solid rgba(255,255,255,0.1);
+            color: white; padding: 25px 30px; text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative;
         }
-        header h1 { margin: 0; font-size: 1.8rem; letter-spacing: 1px; }
-        header p { margin: 5px 0 0; opacity: 0.8; font-size: 0.9rem; }
 
-        /* Botón Salir */
         .btn-logout {
-            position: absolute;
-            right: 30px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 8px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.85rem;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            backdrop-filter: blur(5px);
+            position: absolute; right: 30px; top: 50%; transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.15); color: white; border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem;
+            transition: 0.3s; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(5px);
         }
-        .btn-logout:hover { background: white; color: var(--azul-argos); box-shadow: 0 0 15px rgba(255,255,255,0.3); }
+        .btn-logout:hover { background: white; color: var(--azul-argos); }
 
-        /* ----- CONTENEDOR PRINCIPAL ----- */
-        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
-        #msg { color: var(--azul-argos); border-bottom: 2px solid #e1e4e8; padding-bottom: 15px; margin-bottom: 30px; }
+        /* ----- TOOLBAR DE INTELIGENCIA ----- */
+        .toolbar {
+            max-width: 1200px; margin: 20px auto; padding: 15px 25px;
+            background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between;
+        }
+        .search-box { flex: 1; min-width: 250px; position: relative; }
+        .search-box input {
+            width: 100%; padding: 10px 40px; border-radius: 8px; border: 1px solid #ddd; outline: none; transition: 0.3s;
+        }
+        .search-box input:focus { border-color: var(--azul-argos); box-shadow: 0 0 5px rgba(0,51,102,0.2); }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #888; }
 
-        /* ----- NUEVA ORGANIZACIÓN POR FECHA ----- */
+        .filter-group { display: flex; align-items: center; gap: 15px; }
+        .filter-group input[type="date"] { padding: 9px; border-radius: 8px; border: 1px solid #ddd; color: var(--azul-argos); }
+
+        .view-toggle { display: flex; background: #eee; border-radius: 8px; padding: 4px; }
+        .view-btn {
+            border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; color: #666; transition: 0.3s;
+        }
+        .view-btn.active { background: white; color: var(--azul-argos); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        /* ----- CONTENEDOR Y GRID ----- */
+        .container { max-width: 1200px; margin: 0 auto 30px; padding: 0 20px; }
         .date-section { margin-bottom: 40px; }
         .date-header {
-            color: var(--azul-argos);
-            font-size: 1.1rem;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding-left: 10px;
-            border-left: 4px solid var(--azul-claro);
-        }
-        .date-header i { opacity: 0.7; }
-        .badge-count { background: #e1e4e8; color: var(--texto-gris); font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; }
-
-        /* ----- GRID DE TARJETAS (MÁS PEQUEÑAS) ----- */
-        .video-grid {
-            display: grid;
-            /* CAMBIO: minmax reducido de 300px a 240px para tarjetas más pequeñas */
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 20px;
+            color: var(--azul-argos); font-size: 1rem; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 10px; padding-left: 10px; border-left: 4px solid var(--azul-claro);
         }
 
-        /* ----- TARJETA PRO (HOVER POP) ----- */
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; transition: 0.3s; }
+
+        /* MODO LISTA (REDEFINICIÓN) */
+        .video-grid.list-mode { grid-template-columns: 1fr; }
+        .video-grid.list-mode .card { display: flex; flex-direction: row; height: 120px; }
+        .video-grid.list-mode .card video { width: 200px; height: 120px; }
+        .video-grid.list-mode .card .info { flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .video-grid.list-mode .status-badge { margin-top: 0; }
+        .video-grid.list-mode .btn-delete { position: static; transform: none; }
+
+        /* TARJETA POP */
         .card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            overflow: hidden;
-            position: relative;
-            /* CAMBIO: Transición suave para el efecto pop */
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            z-index: 1;
+            background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden; position: relative; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-        /* CAMBIO: Efecto POP al pasar el mouse (5% más grande y más sombra) */
-        .card:hover {
-            transform: scale(1.05);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
-            z-index: 10; /* Asegura que quede por encima de las otras */
-        }
-
-        /* CAMBIO: Altura de video reducida de 200px a 150px */
+        .card:hover { transform: scale(1.05); box-shadow: 0 12px 24px rgba(0,0,0,0.15); z-index: 10; }
         video { width: 100%; height: 150px; background: #000; display: block; object-fit: cover; }
-
-        .info { padding: 15px; position: relative; }
-        .info h4 { margin: 0 0 10px 0; color: var(--azul-argos); font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .info-item { display: flex; align-items: center; gap: 8px; color: var(--texto-gris); font-size: 0.8rem; margin-bottom: 5px; }
-        .info-item i { color: var(--azul-claro); opacity: 0.7; width: 14px; text-align: center;}
-
-        .status-badge {
-            display: inline-block;
-            margin-top: 12px;
-            background: #ffeeba;
-            color: #856404;
-            font-weight: 600;
-            font-size: 0.7rem;
-            padding: 3px 8px;
-            border-radius: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
+        .info { padding: 15px; }
+        .info h4 { margin: 0 0 8px 0; color: var(--azul-argos); font-size: 0.85rem; }
+        .info-item { color: #666; font-size: 0.75rem; margin-bottom: 4px; }
+        .status-badge { display: inline-block; margin-top: 8px; background: #ffeeba; color: #856404; font-weight: 600; font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; }
         .btn-delete {
-            position: absolute;
-            bottom: 15px;
-            right: 15px;
-            background: white;
-            color: var(--rojo-alerta);
-            border: 1px solid rgba(217, 83, 79, 0.3);
-            padding: 0;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 32px; height: 32px;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: absolute; bottom: 12px; right: 12px; background: white; color: var(--rojo-alerta); border: 1px solid #ffcccc;
+            width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s;
         }
-        .btn-delete:hover { background: var(--rojo-alerta); color: white; border-color: var(--rojo-alerta); }
+        .btn-delete:hover { background: var(--rojo-alerta); color: white; }
 
-        /* Responsive adjustments */
         @media (max-width: 768px) {
-            header { padding: 20px; }
-            .btn-logout { position: static; transform: none; margin-top: 15px; display: inline-flex; width: auto; }
-            .container { margin-top: 20px; }
-            .video-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
-            video { height: 120px; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .video-grid.list-mode .card { flex-direction: column; height: auto; }
+            .video-grid.list-mode .card video { width: 100%; height: 150px; }
         }
-    </script>
-</style>
+    </style>
 </head>
 <body>
     <header>
@@ -154,27 +102,119 @@
         </button>
     </header>
 
+    <div class="toolbar">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Buscar evidencia por nombre..." onkeyup="filtrar()">
+        </div>
+        
+        <div class="filter-group">
+            <input type="date" id="dateFilter" onchange="filtrar()">
+            <div class="view-toggle">
+                <button class="view-btn active" id="gridBtn" onclick="cambiarVista('grid')">
+                    <i class="fas fa-th-large"></i>
+                </button>
+                <button class="view-btn" id="listBtn" onclick="cambiarVista('list')">
+                    <i class="fas fa-list"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
-        <h2 id="msg">Conectando con el servidor...</h2>
+        <h3 id="msg">Cargando inteligencia de datos...</h3>
         <div id="main-content"></div>
     </div>
 
     <script>
-        // 1. SEGURIDAD: Verificar sesión y activar inactividad
         if (!localStorage.getItem('argos_session')) window.location.href = "login.html";
 
-        let timerInactividad;
-        const resetTimer = () => {
-            clearTimeout(timerInactividad);
-            timerInactividad = setTimeout(() => { alert("Sesión cerrada por seguridad."); cerrarSesion(); }, 900000); // 15 min
-        };
-        window.onload = document.onmousemove = document.onkeypress = resetTimer;
-
-        // Configuración Supabase
         const _supabase = supabase.createClient(
             "https://evnfyrkpfvlonlfkhbkr.supabase.co",
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk"
         );
+
+        let todasLasAlertas = [];
+        let vistaActual = 'grid';
+
+        async function cargar() {
+            const { data, error } = await _supabase.from('alertas').select('*').order('fecha', { ascending: false });
+            if (!error) {
+                todasLasAlertas = data;
+                renderizar(todasLasAlertas);
+            }
+        }
+
+        function renderizar(alertas) {
+            const mainContent = document.getElementById('main-content');
+            const msg = document.getElementById('msg');
+            mainContent.innerHTML = '';
+            
+            if (alertas.length === 0) {
+                msg.innerText = "No se encontraron coincidencias";
+                return;
+            }
+            msg.innerText = `Mostrando ${alertas.length} evidencias`;
+
+            // Agrupar por fecha
+            const grupos = {};
+            alertas.forEach(item => {
+                const f = new Date(item.fecha).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                if (!grupos[f]) grupos[f] = [];
+                grupos[f].push(item);
+            });
+
+            for (const [fecha, videos] of Object.entries(grupos)) {
+                let section = `<div class="date-section">
+                    <h4 class="date-header"><i class="far fa-calendar-check"></i> ${fecha.toUpperCase()}</h4>
+                    <div class="video-grid ${vistaActual === 'list' ? 'list-mode' : ''}">`;
+                
+                videos.forEach(item => {
+                    const hora = new Date(item.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    section += `
+                        <div class="card" id="card-${item.id}">
+                            <video controls preload="metadata" src="${item.url_video}#t=0.5"></video>
+                            <div class="info">
+                                <div>
+                                    <h4 title="${item.nombre_archivo}">${item.nombre_archivo}</h4>
+                                    <div class="info-item"><i class="far fa-clock"></i> Registro: ${hora}</div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <span class="status-badge">${item.estado}</span>
+                                    <button class="btn-delete" onclick="eliminar(${item.id}, '${item.nombre_archivo}')">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                section += `</div></div>`;
+                mainContent.innerHTML += section;
+            }
+        }
+
+        function filtrar() {
+            const texto = document.getElementById('searchInput').value.toLowerCase();
+            const fechaFiltro = document.getElementById('dateFilter').value;
+
+            const filtradas = todasLasAlertas.filter(a => {
+                const coincideNombre = a.nombre_archivo.toLowerCase().includes(texto);
+                let coincideFecha = true;
+                if (fechaFiltro) {
+                    const fechaVideo = new Date(a.fecha).toISOString().split('T')[0];
+                    coincideFecha = (fechaVideo === fechaFiltro);
+                }
+                return coincideNombre && coincideFecha;
+            });
+            renderizar(filtradas);
+        }
+
+        function cambiarVista(modo) {
+            vistaActual = modo;
+            document.getElementById('gridBtn').classList.toggle('active', modo === 'grid');
+            document.getElementById('listBtn').classList.toggle('active', modo === 'list');
+            renderizar(todasLasAlertas); // Re-renderiza con la clase de modo correcta
+        }
 
         async function cerrarSesion() {
             await _supabase.auth.signOut();
@@ -182,78 +222,15 @@
             window.location.href = "login.html";
         }
 
-        // 2. LÓGICA DE CARGA Y AGRUPACIÓN POR FECHA
-        let lastDataCount = 0;
-
-        async function cargar() {
-            const { data, error } = await _supabase.from('alertas').select('*').order('fecha', { ascending: false });
-            const msg = document.getElementById('msg');
-            const mainContent = document.getElementById('main-content');
-
-            if (error) { msg.innerText = "Error de conexión"; return; }
-            // Si la cantidad de datos no ha cambiado, no redibujamos (evita parpadeos)
-            if (data.length === lastDataCount && data.length > 0) return;
-            lastDataCount = data.length;
-
-            msg.innerText = data.length > 0 ? `Panel de Evidencias (${data.length} totales)` : "No hay alertas registradas";
-            mainContent.innerHTML = '';
-
-            if (data.length === 0) return;
-
-            // --- AGRUPAR DATOS POR FECHA ---
-            const grupos = {};
-            data.forEach(item => {
-                const fechaObj = new Date(item.fecha);
-                // Formato legible: "lunes, 3 de febrero de 2026"
-                let fechaStr = fechaObj.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                fechaStr = fechaStr.charAt(0).toUpperCase() + fechaStr.slice(1); // Capitalizar primera letra
-                
-                if (!grupos[fechaStr]) grupos[fechaStr] = [];
-                grupos[fechaStr].push(item);
-            });
-
-            // --- RENDERIZAR GRUPOS ---
-            // Recorremos las fechas ordenadas (como vienen de la DB)
-            for (const [fecha, videos] of Object.entries(grupos)) {
-                let seccionHtml = `
-                    <div class="date-section">
-                        <h3 class="date-header">
-                            <i class="far fa-calendar-alt"></i> ${fecha}
-                            <span class="badge-count">${videos.length}</span>
-                        </h3>
-                        <div class="video-grid">`;
-
-                videos.forEach(item => {
-                    const hora = new Date(item.fecha).toLocaleTimeString('es-ES', { hour: '2-digit', minute:'2-digit' });
-                    seccionHtml += `
-                        <div class="card" id="card-${item.id}">
-                            <video controls preload="metadata" playsinline src="${item.url_video}#t=0.1"></video>
-                            <div class="info">
-                                <h4 title="${item.nombre_archivo}">${item.nombre_archivo}</h4>
-                                <div class="info-item"><i class="far fa-clock"></i> Hora: ${hora}</div>
-                                <span class="status-badge"><i class="fas fa-exclamation-circle"></i> ${item.estado}</span>
-                                <button class="btn-delete" onclick="eliminar(${item.id}, '${item.nombre_archivo}')" title="Eliminar evidencia">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </div>
-                        </div>`;
-                });
-
-                seccionHtml += `</div></div>`; // Cerrar grid y sección
-                mainContent.innerHTML += seccionHtml;
-            }
-        }
-
         async function eliminar(id, nombre) {
-            if (!confirm(`¿Eliminar permanentemente: ${nombre}?`)) return;
+            if (!confirm(`¿Borrar permanentemente?`)) return;
             await _supabase.from('alertas').delete().eq('id', id);
             await _supabase.storage.from('videos-receptor').remove([nombre]);
-            lastDataCount = 0; // Forzar recarga inmediata
             cargar();
         }
 
         cargar();
-        setInterval(cargar, 10000); // Recargar cada 10s
+        setInterval(cargar, 20000);
     </script>
 </body>
 </html>
