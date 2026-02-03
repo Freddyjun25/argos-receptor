@@ -53,6 +53,18 @@
     </div>
 
     <script>
+    // PROTECCIÓN DE SEGURIDAD AL PRINCIPIO DEL SCRIPT
+    if (!localStorage.getItem('argos_session')) {
+    window.location.href = "login.html";
+}
+
+// Botón de Cerrar Sesión (puedes añadirlo en el header)
+async function cerrarSesion() {
+    await _supabase.auth.signOut();
+    localStorage.removeItem('argos_session');
+    window.location.href = "login.html";
+}
+
         const _supabase = supabase.createClient("https://evnfyrkpfvlonlfkhbkr.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk");
 
         async function cargar() {
@@ -108,3 +120,4 @@
     </script>
 </body>
 </html>
+
