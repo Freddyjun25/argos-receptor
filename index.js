@@ -12,7 +12,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // CONEXIÓN ACTUALIZADA CON LA NUEVA URL
 const supabase = createClient(
     "https://evnfyrkpfvlonlfkhbkr.supabase.co", 
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldGR4b3p0dHFjdXdocHV6a3RrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTgyMDgwOSwiZXhwIjoyMDg1Mzk2ODA5fQ.0JjvC4PhruTSwdab0l56vKeVlHqa-Ix6o9mkBmaacko"
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDA3NzAxOCwiZXhwIjoyMDg1NjUzMDE4fQ.Nnl0GLX_6NCP1Pe8pnOgFVnQouldk3_oaCXzeFOgw6Q"
 );
 
 // Ruta para ver la página web principal
