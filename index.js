@@ -9,8 +9,11 @@ app.use(express.raw({ type: 'video/mp4', limit: '100mb' }));
 // Servir la carpeta "public" para la interfaz visual
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Conexión con Supabase usando variables de entorno de Render
-const supabase = createClient(process.env.https://hetdxozttqcuwhpuzktk.supabase.co, process.env.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldGR4b3p0dHFjdXdocHV6a3RrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTgyMDgwOSwiZXhwIjoyMDg1Mzk2ODA5fQ.0JjvC4PhruTSwdab0l56vKeVlHqa-Ix6o9mkBmaacko);
+// Conexión corregida con tus datos directos
+const supabase = createClient(
+    "https://hetdxozttqcuwhpuzktk.supabase.co", 
+ "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldGR4b3p0dHFjdXdocHV6a3RrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTgyMDgwOSwiZXhwIjoyMDg1Mzk2ODA5fQ.0JjvC4PhruTSwdab0l56vKeVlHqa-Ix6o9mkBmaacko"
+);
 
 // Ruta para ver la página web principal
 app.get('/', (req, res) => {
