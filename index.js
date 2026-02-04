@@ -52,7 +52,7 @@ app.post('/receptor', async (req, res) => {
         if (dbError) throw dbError;
 
         console.log(`✅ Evidencia guardada con éxito: ${fileName}`);
-        res.status(200).send('Archivado Exitoso');
+        res.status(200).send('RECIBIDO POR ARGOS V2');
         
     } catch (err) {
         console.error('❌ Error en el servidor:', err.message);
