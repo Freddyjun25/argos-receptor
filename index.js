@@ -22,7 +22,7 @@ app.get('/', (req, res) => {
 
 // 2. RUTA ACTUALIZADA PARA RECIBIR .AVI
 app.post('/receptor', async (req, res) => {
-    // Generamos el nombre con extensión .avi para que coincida con lo que manda la cámara
+    console.log("🔔 ¡Algo está intentando entrar por /receptor!"); // Esto nos dirá si el ESP32 toca la puerta
     const fileName = `ARGOS_${Date.now()}.avi`; 
     
     try {
