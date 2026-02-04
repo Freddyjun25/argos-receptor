@@ -3,35 +3,45 @@ const { createClient } = require('@supabase/supabase-js');
 const path = require('path');
 const app = express();
 
-// Configuración para recibir videos de hasta 100MB
-app.use(express.raw({ type: 'video/mp4', limit: '100mb' }));
+// 1. Aceptamos cualquier tipo de archivo (incluyendo .avi) de hasta 100MB
+app.use(express.raw({ type: '*/*', limit: '100mb' }));
 
 // Servir la carpeta "public" para la interfaz visual
 app.use(express.static(path.join(__dirname, 'public')));
 
-// CONEXIÓN ACTUALIZADA CON LA NUEVA URL
+// CONEXIÓN CON SUPABASE
 const supabase = createClient(
     "https://evnfyrkpfvlonlfkhbkr.supabase.co", 
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDA3NzAxOCwiZXhwIjoyMDg1NjUzMDE4fQ.Nnl0GLX_6NCP1Pe8pnOgFVnQouldk3_oaCXzeFOgw6Q"
 );
 
-// Ruta para ver la página web principal
+// Ruta principal
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Ruta para que la cámara suba los videos
+// 2. RUTA ACTUALIZADA PARA RECIBIR .AVI
 app.post('/upload', async (req, res) => {
-    const fileName = `ARGOS_${Date.now()}.mp4`;
+    // Generamos el nombre con extensión .avi para que coincida con lo que manda la cámara
+    const fileName = `ARGOS_${Date.now()}.avi`; 
+    
     try {
+        console.log(`📥 Recibiendo archivo: ${fileName}...`);
+
+        // Subida a Supabase con el contentType correcto para video AVI
         const { error: storageError } = await supabase.storage
             .from('videos-receptor')
-            .upload(fileName, req.body, { contentType: 'video/mp4', upsert: true });
+            .upload(fileName, req.body, { 
+                contentType: 'video/x-msvideo', // MIME type estándar para AVI
+                upsert: true 
+            });
 
         if (storageError) throw storageError;
 
+        // Obtener la URL pública del video
         const { data: urlData } = supabase.storage.from('videos-receptor').getPublicUrl(fileName);
 
+        // Insertar registro en la base de datos
         const { error: dbError } = await supabase.from('alertas').insert([{ 
             nombre_archivo: fileName, 
             url_video: urlData.publicUrl,
@@ -41,11 +51,12 @@ app.post('/upload', async (req, res) => {
 
         if (dbError) throw dbError;
 
-        console.log(`✅ Evidencia guardada: ${fileName}`);
+        console.log(`✅ Evidencia guardada con éxito: ${fileName}`);
         res.status(200).send('Archivado Exitoso');
+        
     } catch (err) {
-        console.error('❌ Error:', err.message);
-        res.status(500).send(err.message);
+        console.error('❌ Error en el servidor:', err.message);
+        res.status(500).send(`Error: ${err.message}`);
     }
 });
 
