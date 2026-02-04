@@ -21,7 +21,7 @@ app.get('/', (req, res) => {
 });
 
 // 2. RUTA ACTUALIZADA PARA RECIBIR .AVI
-app.post('/upload', async (req, res) => {
+app.post('/receptor', async (req, res) => {
     // Generamos el nombre con extensión .avi para que coincida con lo que manda la cámara
     const fileName = `ARGOS_${Date.now()}.avi`; 
     
