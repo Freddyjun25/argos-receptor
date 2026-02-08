@@ -17,11 +17,16 @@ const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // 4. SERVIR ARCHIVOS ESTÁTICOS (CSS, Imágenes, JS del Dashboard)
-app.use(express.static(path.join(__dirname, '.')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // 5. RUTA PRINCIPAL: Muestra tu Dashboard Institucional
-app.get(['/', '/index.html'], (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
+        if (err) {
+            console.error("❌ ERROR: No se encontró index.html dentro de la carpeta public");
+            res.status(404).send("El servidor no encuentra la interfaz en /public/index.html");
+        }
+    });
 });
 
 // 6. RUTA DEL RECEPTOR: Procesa la subida del ESP32
