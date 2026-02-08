@@ -3,64 +3,53 @@ const { createClient } = require('@supabase/supabase-js');
 const path = require('path');
 const app = express();
 
-// 1. PUERTO DINÁMICO PARA RENDER
+// 1. CONFIGURACIÓN DE PUERTO (Vital para Render)
 const PORT = process.env.PORT || 10000;
 
-// 2. MIDDLEWARE PARA RECIBIR BINARIOS (VIDEO .AVI)
+// 2. MIDDLEWARE PARA VIDEO: Permite recibir datos pesados del ESP32
 app.use(express.raw({ type: () => true, limit: '100mb' }));
 
-// 3. CONEXIÓN SEGURA USANDO TUS VARIABLES DE RENDER
-// El servidor las toma directamente de la configuración que hiciste
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+// 3. CONEXIÓN SEGURA A SUPABASE (Usando tus variables de Render)
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// 4. SERVIR ARCHIVOS ESTÁTICOS (CSS, Imágenes, JS del Dashboard)
+// 4. SERVIR ARCHIVOS ESTÁTICOS: Le decimos que busque en la carpeta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 5. RUTA PRINCIPAL: Muestra tu Dashboard Institucional
-app.get('/', (req, res) => {
+// 5. RUTA DEL DASHBOARD: Carga tu index.html desde la carpeta public
+app.get(['/', '/index.html'], (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
         if (err) {
-            console.error("❌ ERROR: No se encontró index.html dentro de la carpeta public");
-            res.status(404).send("El servidor no encuentra la interfaz en /public/index.html");
+            console.error("❌ No se encontró el HTML en /public/index.html");
+            res.status(404).send("Error: Interfaz no encontrada en la carpeta public.");
         }
     });
 });
 
-// 6. RUTA DEL RECEPTOR: Procesa la subida del ESP32
+// 6. RUTA DEL RECEPTOR: Donde el ESP32 envía los videos
 app.post('/receptor', async (req, res) => {
-    console.log("🔔 [ALERTA] Recibiendo paquete de video del ESP32...");
-
+    console.log("🔔 [SISTEMA] ¡Video entrante detectado!");
+    
     const fileName = req.headers['x-file-name'] || `video_${Date.now()}.avi`;
-    const videoData = req.body;
-
-    if (!videoData || videoData.length === 0) {
-        return res.status(400).send("Datos vacíos");
-    }
-
+    
     try {
-        // Subida al Bucket de Supabase
         const { data, error } = await supabase.storage
-            .from('videos_universitarios') // Revisa que este nombre sea igual en Supabase
-            .upload(fileName, videoData, {
+            .from('videos_universitarios') // Verifica que este nombre sea igual en Supabase
+            .upload(fileName, req.body, {
                 contentType: 'video/avi',
                 upsert: true
             });
 
         if (error) throw error;
-
-        console.log(`✅ Éxito: ${fileName} guardado en el storage.`);
-        res.status(200).send("VIDEO_GUARDADO_OK");
+        
+        console.log(`✅ Video ${fileName} guardado con éxito.`);
+        res.status(200).send("SUBIDA_EXITOSA");
 
     } catch (err) {
         console.error("❌ Error en la subida:", err.message);
-        res.status(500).send("Error interno: " + err.message);
+        res.status(500).send("Error interno");
     }
 });
 
-// 7. INICIO DEL SERVIDOR
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Servidor ARGOS corriendo en puerto ${PORT}`);
+    console.log(`🚀 Servidor ARGOS CORE activo y escuchando en puerto ${PORT}`);
 });
