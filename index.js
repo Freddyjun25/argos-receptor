@@ -13,20 +13,31 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 
 // 3. LA RUTA DEL VIDEO (Muévela aquí arriba)
 app.post('/receptor', async (req, res) => {
-    console.log("🔔 [SISTEMA] ¡Llegó un video del ESP32!");
+    console.log("📥 [SISTEMA] Intento de subida recibido...");
+    
+    // Extraer nombre del video
     const fileName = req.headers['x-file-name'] || `video_${Date.now()}.avi`;
     
     try {
         const { data, error } = await supabase.storage
-            .from('videos_receptor')
-            .upload(fileName, req.body, { contentType: 'video/avi', upsert: true });
+            .from('videos_receptor') // Asegúrate que sea minúsculas exactas
+            .upload(fileName, req.body, {
+                contentType: 'video/avi',
+                upsert: true
+            });
 
-        if (error) throw error;
-        console.log("✅ Guardado en Supabase");
-        res.status(200).send("OK");
+        if (error) {
+            // ESTO ES VITAL: Imprime el error real en los Logs de Render
+            console.error("❌ ERROR DE SUPABASE:", error.message);
+            return res.status(500).send(`Error de Supabase: ${error.message}`);
+        }
+
+        console.log("✅ [EXITO] Video guardado:", fileName);
+        res.status(200).send("OK_GUARDADO");
+
     } catch (err) {
-        console.error("❌ Error subiendo:", err.message);
-        res.status(500).send("Error");
+        console.error("❌ ERROR CRÍTICO DEL SERVIDOR:", err.message);
+        res.status(500).send("Error interno: " + err.message);
     }
 });
 
