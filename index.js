@@ -18,7 +18,7 @@ app.post('/receptor', async (req, res) => {
     
     try {
         const { data, error } = await supabase.storage
-            .from('videos_universitarios')
+            .from('videos_receptor')
             .upload(fileName, req.body, { contentType: 'video/avi', upsert: true });
 
         if (error) throw error;
