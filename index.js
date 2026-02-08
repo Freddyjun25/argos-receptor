@@ -1,64 +1,47 @@
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
+const path = require('path'); // Vital para cargar el HTML
 const app = express();
 
-// 1. CONFIGURACIÓN DE PUERTO (Vital para que Render detecte el servicio)
 const PORT = process.env.PORT || 10000;
 
-// 2. MIDDLEWARE PARA VIDEO: Permite recibir los datos binarios del .avi
+// 1. PERMITIR RECIBIR VIDEOS PESADOS
 app.use(express.raw({ type: () => true, limit: '100mb' }));
 
-// 3. CONEXIÓN A SUPABASE
-// NOTA: Reemplaza con tus credenciales o usa Variables de Entorno en Render
-const supabaseUrl = 'https://hetdxozttqcuwhpuzktk.supabase.co'; 
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDA3NzAxOCwiZXhwIjoyMDg1NjUzMDE4fQ.Nnl0GLX_6NCP1Pe8pnOgFVnQouldk3_oaCXzeFOgw6Q';
-const supabase = createClient(supabaseUrl, supabaseKey);
+// 2. CONEXIÓN A SUPABASE (Asegúrate de poner tus datos reales aquí)
+const supabase = createClient("https://hetdxozttqcuwhpuzktk.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDA3NzAxOCwiZXhwIjoyMDg1NjUzMDE4fQ.Nnl0GLX_6NCP1Pe8pnOgFVnQouldk3_oaCXzeFOgw6Q");
 
-// 4. RUTA PARA EL DASHBOARD (Keep-alive)
+// 3. CARGAR TUS ARCHIVOS VISUALES (HTML, CSS, JS)
+// Esto hará que https://argos-sistema-institucional.onrender.com/ vuelva a ser tu página
+app.use(express.static(path.join(__dirname, '.')));
+
+// 4. RUTA DEL DASHBOARD (Para que no salga solo el texto blanco)
 app.get(['/', '/index.html'], (req, res) => {
-    res.send("🛡️ ARGOS CORE: DASHBOARD ONLINE - ESPERANDO SEÑAL DEL ESP32");
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// 5. RUTA PARA EL VIDEO (La que el ESP32 busca como /receptor)
+// 5. RUTA DEL RECEPTOR (Para que el Arduino NO dé error 404)
 app.post('/receptor', async (req, res) => {
-    console.log("🔔 [ALERTA] ¡LLEGÓ UN VIDEO AL SERVIDOR INSTITUCIONAL!");
-
-    // Extraemos el nombre que envía el ESP32 en la cabecera 'X-File-Name'
+    console.log("🔔 ¡LLEGÓ UN VIDEO!");
     const fileName = req.headers['x-file-name'] || `video_${Date.now()}.avi`;
-    const videoData = req.body;
-
-    // Validación básica de datos
-    if (!videoData || videoData.length === 0) {
-        console.error("❌ Error: Cuerpo de petición vacío.");
-        return res.status(400).send("Archivo vacío");
-    }
-
+    
     try {
-        console.log(`📦 Procesando subida a Storage: ${fileName}...`);
-
-        // Subida al Bucket de Supabase
         const { data, error } = await supabase.storage
-            .from('videos_universitarios') // Asegúrate de que este nombre sea exacto en Supabase
-            .upload(fileName, videoData, {
+            .from('videos_universitarios') // Nombre de tu bucket en Supabase
+            .upload(fileName, req.body, {
                 contentType: 'video/avi',
                 upsert: true
             });
 
-        if (error) {
-            console.error("❌ Error en Supabase Storage:", error.message);
-            return res.status(500).send("Error en Storage");
-        }
-
-        console.log("✅ Video almacenado exitosamente en la nube.");
-        res.status(200).send("RECIBIDO EN INSTITUCIONAL Y GUARDADO");
-
+        if (error) throw error;
+        console.log("✅ Video guardado en Supabase");
+        res.status(200).send("RECIBIDO Y GUARDADO");
     } catch (err) {
-        console.error("❌ Error crítico en el servidor:", err.message);
-        res.status(500).send("Error interno del servidor");
+        console.error("❌ Error:", err.message);
+        res.status(500).send("Error interno");
     }
 });
 
-// 6. LANZAMIENTO DEL SERVIDOR
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Servidor Argos Receptor activo en puerto ${PORT}`);
+    console.log(`🚀 Servidor en línea en puerto ${PORT}`);
 });
