@@ -153,14 +153,55 @@
         function renderizar(videos) {
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = '';
-            document.getElementById('msg').innerText = videos.length > 0 ? `Analizando ${videos.length} grabaciones` : "Sin evidencias en el storage";
+            
+            // Actualizamos el mensaje de estado
+            const msgElement = document.getElementById('msg');
+            if (msgElement) {
+                msgElement.innerText = videos.length > 0 ? `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS` : "ESPERANDO DETECCIÓN...";
+            }
 
             const grupos = {};
+            // Agrupamos por fecha para que se vea organizado
             videos.forEach(item => {
                 const f = new Date(item.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
                 if (!grupos[f]) grupos[f] = [];
                 grupos[f].push(item);
             });
+
+            for (const [fecha, vids] of Object.entries(grupos)) {
+                let section = `
+                    <div class="date-section">
+                        <h4 class="date-header"><i class="fas fa-shield-alt"></i> ${fecha.toUpperCase()}</h4>
+                        <div class="video-grid">`;
+                
+                vids.forEach(item => {
+                    const hora = new Date(item.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    section += `
+                        <div class="card">
+                            <div style="height:160px; background:#222; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555;">
+                                <i class="fas fa-file-video fa-3x" style="color: var(--azul-claro);"></i>
+                                <span style="font-size:10px; margin-top:10px; color:#aaa;">FORMATO AVI (EVIDENCIA CRUDA)</span>
+                            </div>
+                            <div class="info">
+                                <h4 style="font-size:0.85rem; margin:0; color:var(--azul-argos); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.nombre_archivo}</h4>
+                                <div style="font-size:0.75rem; color:#777; margin:10px 0;"><i class="far fa-clock"></i> DETECTADO A LAS: ${hora}</div>
+                                
+                                <div style="display:flex; gap:5px; margin-top:10px;">
+                                    <a href="${item.url_video}" download="${item.nombre_archivo}" target="_blank"
+                                       style="flex:1; background:var(--azul-claro); color:white; text-decoration:none; text-align:center; padding:8px; border-radius:5px; font-size:0.8rem; font-weight:bold; display: inline-block;">
+                                       <i class="fas fa-download"></i> DESCARGAR
+                                    </a>
+                                    <button onclick="eliminar('${item.nombre_archivo}')" 
+                                            style="background:white; color:var(--rojo-alerta); border:1px solid #ffcccc; padding:8px; border-radius:5px; cursor:pointer; width: 40px;">
+                                       <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                mainContent.innerHTML += section + `</div></div>`;
+            }
+        }
 
             for (const [fecha, vids] of Object.entries(grupos)) {
                 let section = `<div class="date-section">
@@ -221,3 +262,4 @@
     </script>
 </body>
 </html>
+
