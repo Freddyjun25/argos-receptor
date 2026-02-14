@@ -143,31 +143,23 @@
             .from(BUCKET_NAME)
             .getPublicUrl(`videos/${file.name}`);
         
-        // --- FORMATEO ESTILO DVR PROFESIONAL ---
-        // Nombre esperado: 14022026_005709.avi
         const partes = file.name.replace('.avi', '').split('_');
-        let nombreLimpio = file.name;
+        let formateado = file.name;
 
         if (partes.length === 2) {
-            const d = partes[0]; // 14022026
-            const t = partes[1]; // 005709
-            
-            // Fecha: 14-02-26 (usando los últimos 2 dígitos del año)
+            const d = partes[0]; 
+            const t = partes[1];
             const fecha = `${d.substring(0,2)}-${d.substring(2,4)}-${d.substring(6,8)}`;
-            
-            // Convertir hora 00:57 a 12:57 AM
             let horas = parseInt(t.substring(0,2));
             const minutos = t.substring(2,4);
             const ampm = horas >= 12 ? 'PM' : 'AM';
-            horas = horas % 12;
-            horas = horas ? horas : 12; // el 0 se convierte en 12
-            
-            nombreLimpio = `${fecha} | ${horas}:${minutos} ${ampm}`;
+            horas = horas % 12 || 12;
+            formateado = `${fecha} | ${horas}:${minutos} ${ampm}`;
         }
         
         return {
             nombre_archivo: file.name,
-            nombre_visible: nombreLimpio,
+            nombre_visible: formateado, // <--- Esta es la clave
             fecha: file.created_at,
             url_video: urlData.publicUrl
         };
@@ -220,7 +212,7 @@
                                 <span style="font-size:10px; margin-top:10px; color:#aaa;">FORMATO AVI (EVIDENCIA)</span>
                             </div>
                             <div class="info">
-                                <h4 style="font-size:0.85rem; margin:0; color:var(--azul-argos);">${item.nombre_archivo}</h4>
+                                <h4 style="font-size:0.9rem; margin:0; color:var(--azul-argos); font-weight: bold;">${item.nombre_visible || item.nombre_archivo}</h4>
                                 <div style="font-size:0.75rem; color:#777; margin:10px 0;"><i class="far fa-clock"></i> HORA: ${hora}</div>
                                 <div style="display:flex; gap:5px; margin-top:10px;">
                                     <a href="${item.url_video}" download="${item.nombre_archivo}" target="_blank"
@@ -273,6 +265,7 @@
     </script>
 </body>
 </html>
+
 
 
 
