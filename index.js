@@ -6,6 +6,7 @@ const ffmpegStatic = require('ffmpeg-static');
 const fs = require('fs');
 const app = express();
 
+// Forzamos la ruta del binario
 ffmpeg.setFfmpegPath(ffmpegStatic);
 
 const PORT = process.env.PORT || 10000;
@@ -16,80 +17,83 @@ const supabase = createClient(
     { auth: { persistSession: false } }
 );
 
-// USAREMOS ESTA RUTA QUE ES SEGURA EN RENDER
-const tempDir = path.join(__dirname, 'temp');
+// --- SOLUCIÓN DE CARPETA TEMPORAL ---
+// Usamos el directorio raíz del proceso de Node
+const WORK_DIR = process.cwd();
+const tempDir = path.join(WORK_DIR, 'temp');
+
 if (!fs.existsSync(tempDir)) {
+    console.log("📂 Creando carpeta temporal...");
     fs.mkdirSync(tempDir, { recursive: true });
 }
 
-app.get('/hola', (req, res) => {
-    res.send("🚀 Servidor Argos vivo con FFmpeg Fix");
-});
-
 app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50mb' }), async (req, res) => {
-    console.log("📥 [SISTEMA] Recibiendo video AVI...");
+    console.log("📥 [SISTEMA] Datos recibidos. Longitud:", req.body.length);
     
-    const idUnico = Date.now();
-    const aviPath = path.join(tempDir, `video_${idUnico}.avi`);
-    const mp4Path = path.join(tempDir, `video_${idUnico}.mp4`);
+    const id = Date.now();
+    const aviPath = path.resolve(tempDir, `input_${id}.avi`);
+    const mp4Path = path.resolve(tempDir, `output_${id}.mp4`);
 
     try {
-        // 1. Guardar el AVI
+        // Guardar el AVI
         fs.writeFileSync(aviPath, req.body);
-        console.log("⚙️ Convirtiendo a MP4 en carpeta local...");
+        console.log("⚙️ Iniciando transcodificación...");
 
-        // 2. Convertir
-        ffmpeg(aviPath)
-            .output(mp4Path) // Especificamos el archivo de salida claramente
+        ffmpeg()
+            .input(aviPath)
+            .output(mp4Path)
+            .videoCodec('libx264')
             .outputOptions([
-                '-vcodec libx264',
                 '-pix_fmt yuv420p',
                 '-preset ultrafast',
+                '-movflags +faststart', // Optimiza para streaming web
                 '-crf 28'
             ])
+            .on('start', (cmd) => {
+                console.log("🚀 Comando ejecutado:", cmd);
+            })
+            .on('error', (err) => {
+                console.error("❌ Fallo en motor FFmpeg:", err.message);
+                if (fs.existsSync(aviPath)) fs.unlinkSync(aviPath);
+                res.status(500).send("FFMPEG_ERROR");
+            })
             .on('end', async () => {
-                console.log("✅ MP4 creado. Subiendo...");
+                console.log("✅ Conversión exitosa. Subiendo a la nube...");
                 
                 try {
                     const mp4Buffer = fs.readFileSync(mp4Path);
                     const { error } = await supabase.storage
                         .from('videos-receptor')
-                        .upload(`video_${idUnico}.mp4`, mp4Buffer, {
+                        .upload(`evidencia_${id}.mp4`, mp4Buffer, {
                             contentType: 'video/mp4',
                             upsert: true
                         });
 
-                    // Limpieza
+                    // Limpieza inmediata
                     if (fs.existsSync(aviPath)) fs.unlinkSync(aviPath);
                     if (fs.existsSync(mp4Path)) fs.unlinkSync(mp4Path);
 
                     if (error) throw error;
 
-                    console.log("🎊 ¡ÉXITO TOTAL!");
-                    res.status(200).send("OK_GUARDADO");
+                    console.log("🎉 [FINALIZADO] Video disponible en Dashboard");
+                    res.status(200).send("OK_PROCESADO");
+
                 } catch (err) {
-                    console.error("❌ Error subiendo:", err.message);
-                    res.status(500).send("Error Supabase");
+                    console.error("❌ Error Supabase:", err.message);
+                    res.status(500).send("STORAGE_ERROR");
                 }
             })
-            .on('error', (err) => {
-                console.error("❌ Error FFmpeg:", err.message);
-                if (fs.existsSync(aviPath)) fs.unlinkSync(aviPath);
-                res.status(500).send("Error FFmpeg");
-            })
-            .run(); // Usamos .run() para asegurar la ejecución
+            .run();
 
     } catch (err) {
-        console.error("❌ Error Sistema:", err.message);
-        res.status(500).send("Error Servidor");
+        console.error("❌ Error de Sistema:", err.message);
+        res.status(500).send("SERVER_ERROR");
     }
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 ARGOS ONLINE EN PUERTO ${PORT}`);
+    console.log(`🚀 SERVIDOR ARGOS ONLINE`);
 });
