@@ -21,15 +21,16 @@ app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50
     console.log("📥 [SISTEMA] Recibiendo video...");
     
     const id = Date.now();
+    // Usamos /tmp que es la única carpeta con permisos de escritura en Render
     const aviPath = `/tmp/in_${id}.avi`;
     const mp4Path = `/tmp/out_${id}.mp4`;
 
     try {
-        // 1. Escribir el archivo AVI original en /tmp
+        // 1. Escribir el archivo AVI original recibido del ESP32
         fs.writeFileSync(aviPath, req.body);
         console.log("⚙️ Intentando conversión simplificada...");
 
-        // 2. Proceso FFmpeg con el mínimo de argumentos posible
+        // 2. Proceso FFmpeg
         ffmpeg(aviPath)
             .output(mp4Path)
             .videoCodec('libx264')
@@ -39,33 +40,37 @@ app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50
                 '-pix_fmt yuv420p'
             ])
             .on('start', (commandLine) => {
-                console.log('🚀 Ejecutando:', commandLine);
+                console.log('🚀 Ejecutando FFmpeg:', commandLine);
             })
             .on('error', async (err) => {
-                console.error("❌ FFmpeg falló:", err.message);
+                console.error("❌ FFmpeg falló (Probable restricción de Render):", err.message);
                 
-                // --- PLAN DE RESCATE ---
-                // Si la conversión falla, subimos el AVI original renombrado a .mp4
-                // Esto asegura que el ESP32 reciba un OK y la evidencia llegue a la nube
-                console.log("⚠️ Rescatando archivo original para no perder evidencia...");
+                // --- PLAN DE RESCATE (CAMINO 1) ---
+                // Si la conversión falla, subimos el AVI crudo con extensión .avi
+                // Esto permite que al descargarlo sea un video válido y fluido
+                console.log("⚠️ Rescatando archivo original como .avi para asegurar fluidez...");
                 try {
                     const originalBuffer = fs.readFileSync(aviPath);
-                    await supabase.storage
+                    const { error } = await supabase.storage
                         .from('videos-receptor')
-                        .upload(`rescatado_${id}.mp4`, originalBuffer, {
-                            contentType: 'video/mp4',
+                        .upload(`evidencia_${id}.avi`, originalBuffer, {
+                            contentType: 'video/x-msvideo', // MIME type oficial de AVI
                             upsert: true
                         });
-                    console.log("🎊 Evidencia rescatada (formato original).");
+
+                    if (error) throw error;
+
+                    console.log("🎊 Evidencia guardada exitosamente como AVI.");
                     res.status(200).send("OK_RESCATADO");
                 } catch (e) {
+                    console.error("❌ Error en rescate:", e.message);
                     res.status(500).send("ERR_FATAL");
                 } finally {
                     if (fs.existsSync(aviPath)) fs.unlinkSync(aviPath);
                 }
             })
             .on('end', async () => {
-                console.log("✅ Conversión exitosa. Subiendo...");
+                console.log("✅ Conversión exitosa a MP4. Subiendo...");
                 
                 try {
                     const mp4Buffer = fs.readFileSync(mp4Path);
@@ -91,7 +96,7 @@ app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50
             .run();
 
     } catch (err) {
-        console.error("❌ Error FS:", err.message);
+        console.error("❌ Error de Sistema (FS):", err.message);
         res.status(500).send("ERR_SERVER");
     }
 });
@@ -100,5 +105,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 SERVIDOR ARGOS ACTIVO - MODO HÍBRIDO`);
+    console.log(`\n🚀 SERVIDOR ARGOS ACTIVO`);
+    console.log(`📂 Almacenamiento temporal en /tmp`);
 });
