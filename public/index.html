@@ -60,18 +60,17 @@
         }
         .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
 
-        /* CONTENEDOR DE VIDEO REFORMADO */
         .card-visual {
             height: 180px; background: #000; position: relative; overflow: hidden;
             display: flex; align-items: center; justify-content: center;
         }
 
-        .card-visual img {
+        /* AJUSTE PARA EL VIDEO */
+        video {
             width: 100%; height: 100%; object-fit: cover; 
-            background: #000; transition: opacity 0.3s;
+            background: #000;
         }
 
-        /* BOTONES MINI SOBRE EL VIDEO */
         .video-controls {
             position: absolute; bottom: 10px; width: 100%; 
             display: flex; justify-content: center; gap: 10px; z-index: 5;
@@ -103,7 +102,6 @@
             padding: 10px; border-radius: 6px; cursor: pointer;
         }
 
-        /* PANEL DE STATS (Oculto por defecto) */
         #statsPanel { display: none; background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
         .stat-card { text-align: center; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
@@ -139,7 +137,6 @@
         <h3 id="msg" style="color: #64748b; font-weight: 500; font-size: 0.9rem;">Sincronizando con Storage...</h3>
         <div id="main-content"></div>
     </div>
-
     <script>
         const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
         const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk";
@@ -161,7 +158,6 @@
                     .map(file => {
                         const { data: urlData } = _supabase.storage.from(BUCKET_NAME).getPublicUrl(`videos/${file.name}`);
                         
-                        // Procesar nombre para vista bonita
                         const partes = file.name.replace('.avi', '').split('_');
                         let formateado = file.name;
                         if (partes.length === 2) {
@@ -204,10 +200,13 @@
                     sectionHTML += `
                         <div class="card">
                             <div class="card-visual">
-                                <img id="${playerID}" src="${item.url_video}" loading="lazy">
+                                <video id="${playerID}" preload="metadata" loop muted playsinline>
+                                    <source src="${item.url_video}" type="video/x-msvideo">
+                                    Tu navegador no soporta el formato.
+                                </video>
                                 <div class="video-controls">
-                                    <button onclick="controlVideo('${playerID}', 'play', '${item.url_video}')" class="btn-mini"><i class="fas fa-play"></i></button>
-                                    <button onclick="controlVideo('${playerID}', 'pause')" class="btn-mini"><i class="fas fa-pause"></i></button>
+                                    <button onclick="controlVideoReal('${playerID}', 'play')" class="btn-mini"><i class="fas fa-play"></i></button>
+                                    <button onclick="controlVideoReal('${playerID}', 'pause')" class="btn-mini"><i class="fas fa-pause"></i></button>
                                 </div>
                             </div>
                             <div class="card-info">
@@ -224,34 +223,19 @@
                 mainContent.innerHTML += sectionHTML;
             }
         }
-let intervaloresRepro = {}; // Para guardar los cronómetros de cada video
 
-function controlVideo(id, accion, url) {
-    const img = document.getElementById(id);
-    
-    // Limpiamos cualquier bucle previo para ese video
-    if (intervaloresRepro[id]) {
-        clearInterval(intervaloresRepro[id]);
-    }
-
-    if (accion === 'pause') {
-        img.style.opacity = "0.5";
-        img.src = ""; // Cortamos la conexión
-    } else {
-        img.style.opacity = "1";
-        
-        // Función para actualizar el cuadro con un parámetro único (timestamp)
-        const actualizarCuadro = () => {
-            // El truco del "?" + tiempo evita que el navegador use la versión estática guardada en caché
-            img.src = url + "?t=" + new Date().getTime();
-        };
-
-        actualizarCuadro(); // Carga el primero de inmediato
-        
-        // Creamos un bucle que pide una imagen nueva 10 veces por segundo (10 FPS)
-        intervaloresRepro[id] = setInterval(actualizarCuadro, 100); 
-    }
-}
+        // NUEVA FUNCIÓN DE CONTROL DE VIDEO REAL
+        function controlVideoReal(id, accion) {
+            const video = document.getElementById(id);
+            if (accion === 'play') {
+                video.play().catch(e => {
+                    console.warn("Reproducción fallida:", e);
+                    alert("Haz click en el video para reproducir (restricción del navegador).");
+                });
+            } else {
+                video.pause();
+            }
+        }
 
         function actualizarEstadisticas(data) {
             const hoy = new Date().toISOString().split('T')[0];
@@ -285,4 +269,3 @@ function controlVideo(id, accion, url) {
     </script>
 </body>
 </html>
-
