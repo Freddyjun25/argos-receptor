@@ -224,18 +224,34 @@
                 mainContent.innerHTML += sectionHTML;
             }
         }
+let intervaloresRepro = {}; // Para guardar los cronómetros de cada video
 
-        function controlVideo(id, accion, url) {
-            const img = document.getElementById(id);
-            if (accion === 'pause') {
-                img.style.opacity = "0.4";
-                img.src = ""; 
-            } else {
-                img.style.opacity = "1";
-                // Anti-cache para forzar el flujo MJPEG
-                img.src = url + "?t=" + new Date().getTime();
-            }
-        }
+function controlVideo(id, accion, url) {
+    const img = document.getElementById(id);
+    
+    // Limpiamos cualquier bucle previo para ese video
+    if (intervaloresRepro[id]) {
+        clearInterval(intervaloresRepro[id]);
+    }
+
+    if (accion === 'pause') {
+        img.style.opacity = "0.5";
+        img.src = ""; // Cortamos la conexión
+    } else {
+        img.style.opacity = "1";
+        
+        // Función para actualizar el cuadro con un parámetro único (timestamp)
+        const actualizarCuadro = () => {
+            // El truco del "?" + tiempo evita que el navegador use la versión estática guardada en caché
+            img.src = url + "?t=" + new Date().getTime();
+        };
+
+        actualizarCuadro(); // Carga el primero de inmediato
+        
+        // Creamos un bucle que pide una imagen nueva 10 veces por segundo (10 FPS)
+        intervaloresRepro[id] = setInterval(actualizarCuadro, 100); 
+    }
+}
 
         function actualizarEstadisticas(data) {
             const hoy = new Date().toISOString().split('T')[0];
@@ -269,3 +285,4 @@
     </script>
 </body>
 </html>
+
