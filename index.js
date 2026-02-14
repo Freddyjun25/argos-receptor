@@ -1,81 +1,102 @@
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const path = require('path');
+const ffmpeg = require('fluent-ffmpeg');
+const fs = require('fs');
 const app = express();
 
 const PORT = process.env.PORT || 10000;
 
-// --- CONFIGURACIÓN DE SUPABASE (VERSIÓN REFORZADA) ---
-
-// Verificación de diagnóstico en consola
-if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
-    console.error("❌ ERROR: No se encontraron las variables de entorno SUPABASE_URL o SUPABASE_KEY en Render.");
-}
-
-// Creación del cliente con mayor tiempo de espera para evitar "fetch failed"
+// --- CONFIGURACIÓN DE SUPABASE ---
 const supabase = createClient(
     process.env.SUPABASE_URL || '', 
     process.env.SUPABASE_KEY || '',
     {
-        auth: { persistSession: false },
-        global: {
-            // Damos 60 segundos de margen para que el video se suba sin cortes
-            fetch: (...args) => fetch(...args, { connectTimeout: 60000 })
-        }
+        auth: { persistSession: false }
     }
 );
 
+// Asegurarnos de que exista una carpeta temporal para procesar los videos
+const tempDir = path.join(__dirname, 'temp');
+if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir);
+}
+
 // --- RUTAS DEL SERVIDOR ---
 
-// 1. RUTA DE DIAGNÓSTICO
 app.get('/hola', (req, res) => {
-    res.send("🚀 Servidor Argos vivo y operando correctamente");
+    res.send("🚀 Servidor Argos vivo y operando con conversor MP4");
 });
 
-// 2. EL RECEPTOR DE VIDEOS (POST)
-// Usamos express.raw para recibir el archivo binario directamente del ESP32
+// 2. EL RECEPTOR Y CONVERSOR DE VIDEOS
 app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50mb' }), async (req, res) => {
-    console.log("📥 [SISTEMA] Recibiendo video desde el ESP32...");
+    console.log("📥 [SISTEMA] Recibiendo video AVI desde el ESP32...");
     
-    // Extraer nombre del video desde el header que manda el ESP32
-    const fileName = req.headers['x-file-name'] || `video_${Date.now()}.avi`;
+    const idUnico = Date.now();
+    const aviName = `video_${idUnico}.avi`;
+    const mp4Name = `video_${idUnico}.mp4`;
+    
+    const aviPath = path.join(tempDir, aviName);
+    const mp4Path = path.join(tempDir, mp4Name);
 
     try {
-        const { data, error } = await supabase.storage
-        .from('videos-receptor') // <--- CAMBIA EL _ POR -
-        .upload(fileName, req.body, {
-                contentType: 'video/avi',
-                upsert: true
-            });
+        // 1. Guardar el archivo AVI temporalmente en el servidor
+        fs.writeFileSync(aviPath, req.body);
+        console.log("⚙️ Procesando conversión a MP4...");
 
-        if (error) {
-            console.error("❌ Error Supabase:", error.message);
-            // Mandamos el error de vuelta al ESP32 para que lo veamos en el monitor serie
-            return res.status(500).send(`Error Supabase: ${error.message}`);
-        }
+        // 2. Convertir de AVI a MP4 usando FFmpeg
+        ffmpeg(aviPath)
+            .outputOptions([
+                '-vcodec libx264',   // Codec universal
+                '-pix_fmt yuv420p',  // Compatible con todos los navegadores
+                '-preset ultrafast', // Máxima velocidad para Render
+                '-crf 28'            // Calidad balanceada
+            ])
+            .on('end', async () => {
+                console.log("✅ Conversión terminada. Subiendo a Supabase...");
 
-        console.log("✅ [EXITO] Video guardado en Supabase:", fileName);
-        res.status(200).send("OK_GUARDADO");
+                // 3. Subir el video MP4 ya convertido a Supabase
+                const mp4Buffer = fs.readFileSync(mp4Path);
+                const { data, error } = await supabase.storage
+                    .from('videos-receptor')
+                    .upload(mp4Name, mp4Buffer, {
+                        contentType: 'video/mp4',
+                        upsert: true
+                    });
+
+                // Limpiar archivos temporales para no llenar el servidor
+                if (fs.existsSync(aviPath)) fs.unlinkSync(aviPath);
+                if (fs.existsSync(mp4Path)) fs.unlinkSync(mp4Path);
+
+                if (error) {
+                    console.error("❌ Error Supabase:", error.message);
+                    return res.status(500).send(`Error Supabase: ${error.message}`);
+                }
+
+                console.log("🎊 [EXITO] Video MP4 guardado en Supabase:", mp4Name);
+                res.status(200).send("OK_CONVERTIDO_Y_GUARDADO");
+            })
+            .on('error', (err) => {
+                console.error("❌ Error en FFmpeg:", err.message);
+                if (fs.existsSync(aviPath)) fs.unlinkSync(aviPath);
+                res.status(500).send("Error en conversión de video");
+            })
+            .save(mp4Path);
 
     } catch (err) {
-        console.error("❌ Error Crítico en el Servidor:", err.message);
+        console.error("❌ Error Crítico:", err.message);
         res.status(500).send(`Error Crítico: ${err.message}`);
     }
 });
 
 // 3. CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS
-// Servir la carpeta 'public' para el dashboard web
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 4. RUTA PRINCIPAL (Carga el index.html)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // --- INICIO DEL SERVIDOR ---
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n*********************************`);
-    console.log(`🚀 Servidor Argos activo en puerto ${PORT}`);
-    console.log(`📂 Ruta del proyecto: ${__dirname}`);
-    console.log(`*********************************\n`);
+    console.log(`\n🚀 Servidor Argos Activo en puerto ${PORT}`);
 });
