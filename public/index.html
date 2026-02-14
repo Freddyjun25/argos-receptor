@@ -120,13 +120,12 @@
 
         const _supabase = supabase.createClient(URL_SB, KEY_SB);
         let todosLosVideos = [];
-        let vistaActual = 'grid';
 
         async function cargar() {
             console.log("Iniciando sincronización...");
             try {
                 const { data, error } = await _supabase.storage
-                    .from('videos-receptor')
+                    .from(BUCKET_NAME)
                     .list('videos', { limit: 100, sortBy: { column: 'name', order: 'desc' } });
 
                 if (error) throw error;
@@ -141,7 +140,7 @@
                     .filter(f => f.name.endsWith('.avi'))
                     .map(file => {
                         const { data: urlData } = _supabase.storage
-                            .from('videos-receptor')
+                            .from(BUCKET_NAME)
                             .getPublicUrl(`videos/${file.name}`);
                         
                         return {
@@ -152,13 +151,24 @@
                     });
 
                 renderizar(todosLosVideos);
-                actualizarEstadisticas(todosLosVideos);
+                actualizarEstadisticas(todosLosVideos); // <--- Ahora sí funcionará
 
             } catch (err) {
                 console.error("Error crítico:", err.message);
                 document.getElementById('msg').innerText = "ERROR DE CONEXIÓN: " + err.message;
             }
-        } // <--- Verifica que esta llave esté sola
+        }
+
+        function actualizarEstadisticas(data) {
+            const hoy = new Date().toISOString().split('T')[0];
+            const alertasHoy = data.filter(v => v.fecha && v.fecha.startsWith(hoy)).length;
+            
+            const totalElem = document.getElementById('stat-total');
+            const hoyElem = document.getElementById('stat-hoy');
+            
+            if(totalElem) totalElem.innerText = data.length;
+            if(hoyElem) hoyElem.innerText = alertasHoy;
+        }
 
         function renderizar(videos) {
             const mainContent = document.getElementById('main-content');
@@ -204,12 +214,26 @@
                 });
                 mainContent.innerHTML += section + `</div></div>`;
             }
-        } // <--- Verifica que esta llave cierre la función
+        }
+
+        function filtrar() {
+            const busqueda = document.getElementById('searchInput').value.toLowerCase();
+            const fechaFiltro = document.getElementById('dateFilter').value;
+            
+            const filtrados = todosLosVideos.filter(v => {
+                const coincideNombre = v.nombre_archivo.toLowerCase().includes(busqueda);
+                const coincideFecha = !fechaFiltro || v.fecha.startsWith(fechaFiltro);
+                return coincideNombre && coincideFecha;
+            });
+            renderizar(filtrados);
+        }
 
         async function eliminar(nombre) {
             if (!confirm(`¿Borrar evidencia ${nombre}?`)) return;
-            await _supabase.storage.from('videos-receptor').remove([`videos/${nombre}`]);
-            cargar();
+            try {
+                await _supabase.storage.from(BUCKET_NAME).remove([`videos/${nombre}`]);
+                cargar();
+            } catch (e) { alert("Error al eliminar"); }
         }
 
         function toggleStats() {
@@ -217,12 +241,16 @@
             p.style.display = p.style.display === 'block' ? 'none' : 'block';
         }
 
-        // Ejecución inicial
+        function cerrarSesion() {
+            window.location.href = "login.html"; // O la lógica que uses
+        }
+
         cargar();
         setInterval(cargar, 30000);
     </script>
 </body>
 </html>
+
 
 
 
