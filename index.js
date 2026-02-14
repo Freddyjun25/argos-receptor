@@ -42,8 +42,8 @@ app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50
 
     try {
         const { data, error } = await supabase.storage
-            .from('videos_receptor') // Asegúrate de que el bucket se llame así en Supabase
-            .upload(fileName, req.body, {
+        .from('videos-receptor') // <--- CAMBIA EL _ POR -
+        .upload(fileName, req.body, {
                 contentType: 'video/avi',
                 upsert: true
             });
