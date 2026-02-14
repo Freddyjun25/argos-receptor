@@ -212,12 +212,12 @@
                 vids.forEach(item => {
                     section += `
                         <div class="card">
-                            <div class="card-visual" onclick="ampliarVideo('${item.url_video}')">
-                                <video class="video-player" muted preload="metadata">
-                                    <source src="${item.url_video}" type="video/mp4">
-                                </video>
-                                <div class="play-overlay"><i class="fas fa-expand"></i></div>
-                            </div>
+                           // Busca donde pusiste el <video> y cámbialo por esto:
+                         <div class="card-visual" onclick="ampliarVideo('${item.url_video}')">
+                        <img src="${item.url_video}" class="video-player" style="object-fit: contain;" 
+                        onerror="this.src='https://via.placeholder.com/300x150?text=Error+de+Formato+AVI'">
+                        <div class="play-overlay"><i class="fas fa-expand"></i></div>
+                        </div>
                             <div class="card-info">
                                 <div class="card-tag"><i class="fas fa-shield-check"></i> REGISTRO SEGURO</div>
                                 <h4 class="card-title">${item.nombre_visible}</h4>
@@ -280,3 +280,4 @@
     </script>
 </body>
 </html>
+
