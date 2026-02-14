@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SISTEMA ARGOS - Inteligencia de Seguridad</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     <style>
         :root {
             --azul-argos: #003366;
@@ -228,26 +228,25 @@
                         <div class="video-grid">`;
                 
                 vids.forEach(item => {
-                    section += `
-                        <div class="card">
-                            <div class="card-visual">
-                                <i class="fas fa-file-video"></i>
-                                <span>FORMATO AVI (EVIDENCIA)</span>
-                            </div>
-                            <div class="card-info">
-                                <div class="card-tag"><i class="fas fa-shield-check"></i> REGISTRO SEGURO</div>
-                                <h4 class="card-title">${item.nombre_visible}</h4>
-                                <div class="card-actions">
-                                    <a href="${item.url_video}" download="${item.nombre_archivo}" target="_blank" class="btn-download">
-                                        <i class="fas fa-download"></i> DESCARGAR
-                                    </a>
-                                    <button onclick="eliminar('${item.nombre_archivo}')" class="btn-delete">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>`;
-                });
+    section += `
+        <div class="card">
+            <div class="card-visual">
+                <embed src="${item.url_video}" width="100%" height="100%" type="video/x-msvideo">
+                
+                <div style="position:absolute; bottom:0; background:rgba(0,0,0,0.5); width:100%; font-size:10px; color:white; text-align:center;">
+                    STREAM RAW AVI
+                </div>
+            </div>
+            <div class="card-info">
+                <div class="card-tag">REGISTRO SEGURO</div>
+                <h4 class="card-title">${item.nombre_visible}</h4>
+                <div class="card-actions">
+                    <a href="${item.url_video}" download class="btn-download">DESCARGAR</a>
+                    <button onclick="eliminar('${item.nombre_archivo}')" class="btn-delete"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+        </div>`;
+       });
                 mainContent.innerHTML += section + `</div></div>`;
             }
         }
@@ -286,3 +285,4 @@
     </script>
 </body>
 </html>
+
