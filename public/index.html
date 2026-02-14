@@ -137,18 +137,41 @@
                 }
 
                 todosLosVideos = data
-                    .filter(f => f.name.endsWith('.avi'))
-                    .map(file => {
-                        const { data: urlData } = _supabase.storage
-                            .from(BUCKET_NAME)
-                            .getPublicUrl(`videos/${file.name}`);
-                        
-                        return {
-                            nombre_archivo: file.name,
-                            fecha: file.created_at,
-                            url_video: urlData.publicUrl
-                        };
-                    });
+    .filter(f => f.name.endsWith('.avi'))
+    .map(file => {
+        const { data: urlData } = _supabase.storage
+            .from(BUCKET_NAME)
+            .getPublicUrl(`videos/${file.name}`);
+        
+        // --- FORMATEO ESTILO DVR PROFESIONAL ---
+        // Nombre esperado: 14022026_005709.avi
+        const partes = file.name.replace('.avi', '').split('_');
+        let nombreLimpio = file.name;
+
+        if (partes.length === 2) {
+            const d = partes[0]; // 14022026
+            const t = partes[1]; // 005709
+            
+            // Fecha: 14-02-26 (usando los últimos 2 dígitos del año)
+            const fecha = `${d.substring(0,2)}-${d.substring(2,4)}-${d.substring(6,8)}`;
+            
+            // Convertir hora 00:57 a 12:57 AM
+            let horas = parseInt(t.substring(0,2));
+            const minutos = t.substring(2,4);
+            const ampm = horas >= 12 ? 'PM' : 'AM';
+            horas = horas % 12;
+            horas = horas ? horas : 12; // el 0 se convierte en 12
+            
+            nombreLimpio = `${fecha} | ${horas}:${minutos} ${ampm}`;
+        }
+        
+        return {
+            nombre_archivo: file.name,
+            nombre_visible: nombreLimpio,
+            fecha: file.created_at,
+            url_video: urlData.publicUrl
+        };
+    });
 
                 renderizar(todosLosVideos);
                 actualizarEstadisticas(todosLosVideos); // <--- Ahora sí funcionará
@@ -250,6 +273,7 @@
     </script>
 </body>
 </html>
+
 
 
 
