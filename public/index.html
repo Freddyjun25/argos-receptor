@@ -65,9 +65,8 @@
             display: flex; align-items: center; justify-content: center;
         }
 
-        /* AJUSTE PARA EL VIDEO */
         video {
-            width: 100%; height: 100%; object-fit: cover; 
+            width: 100%; height: 100%; object-fit: contain; 
             background: #000;
         }
 
@@ -137,6 +136,7 @@
         <h3 id="msg" style="color: #64748b; font-weight: 500; font-size: 0.9rem;">Sincronizando con Storage...</h3>
         <div id="main-content"></div>
     </div>
+
     <script>
         const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
         const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk";
@@ -147,27 +147,31 @@
 
         async function cargar() {
             try {
+                // Listamos los archivos. Nota: Si tu servidor los sube a la raíz del bucket, deja ''
                 const { data, error } = await _supabase.storage
                     .from(BUCKET_NAME)
-                    .list('videos', { limit: 100, sortBy: { column: 'name', order: 'desc' } });
+                    .list('', { limit: 100, sortBy: { column: 'name', order: 'desc' } });
 
                 if (error) throw error;
 
+                // FILTRAMOS SOLO MP4 (Los que ya convirtió tu servidor)
                 todosLosVideos = (data || [])
-                    .filter(f => f.name.endsWith('.avi'))
+                    .filter(f => f.name.endsWith('.mp4')) 
                     .map(file => {
-                        const { data: urlData } = _supabase.storage.from(BUCKET_NAME).getPublicUrl(`videos/${file.name}`);
+                        const { data: urlData } = _supabase.storage.from(BUCKET_NAME).getPublicUrl(file.name);
                         
-                        const partes = file.name.replace('.avi', '').split('_');
-                        let formateado = file.name;
-                        if (partes.length === 2) {
-                            const d = partes[0]; const t = partes[1];
-                            formateado = `${d.substring(0,2)}/${d.substring(2,4)}/${d.substring(4,8)} - ${t.substring(0,2)}:${t.substring(2,4)}`;
+                        // Formatear nombre: video_1739545500.mp4 -> Fecha legible
+                        let nombreLimpio = file.name.replace('video_', '').replace('.mp4', '');
+                        let fechaLegible = "Registro #" + nombreLimpio;
+                        
+                        if (!isNaN(nombreLimpio)) {
+                            const dateObj = new Date(parseInt(nombreLimpio));
+                            fechaLegible = dateObj.toLocaleString('es-ES');
                         }
                         
                         return {
                             nombre_archivo: file.name,
-                            nombre_visible: formateado,
+                            nombre_visible: fechaLegible,
                             fecha_creacion: file.created_at,
                             url_video: urlData.publicUrl
                         };
@@ -183,7 +187,12 @@
         function renderizar(videos) {
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = '';
-            document.getElementById('msg').innerText = `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS`;
+            document.getElementById('msg').innerText = `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS EN MP4`;
+
+            if(videos.length === 0) {
+                mainContent.innerHTML = '<p style="text-align:center; color:#94a3b8;">No hay videos MP4 procesados aún. Espera a que el servidor convierta los archivos.</p>';
+                return;
+            }
 
             const grupos = {};
             videos.forEach(item => {
@@ -200,9 +209,9 @@
                     sectionHTML += `
                         <div class="card">
                             <div class="card-visual">
-                                <video id="${playerID}" preload="metadata" loop muted playsinline>
-                                    <source src="${item.url_video}" type="video/x-msvideo">
-                                    Tu navegador no soporta el formato.
+                                <video id="${playerID}" preload="metadata" playsinline>
+                                    <source src="${item.url_video}" type="video/mp4">
+                                    Tu navegador no soporta MP4.
                                 </video>
                                 <div class="video-controls">
                                     <button onclick="controlVideoReal('${playerID}', 'play')" class="btn-mini"><i class="fas fa-play"></i></button>
@@ -210,10 +219,10 @@
                                 </div>
                             </div>
                             <div class="card-info">
-                                <div class="card-tag"><i class="fas fa-shield-alt"></i> REGISTRO SEGURO</div>
+                                <div class="card-tag"><i class="fas fa-shield-alt"></i> EVIDENCIA MP4</div>
                                 <h4 class="card-title">${item.nombre_visible}</h4>
                                 <div class="card-actions">
-                                    <a href="${item.url_video}" download class="btn-download"><i class="fas fa-download"></i></a>
+                                    <a href="${item.url_video}" target="_blank" download class="btn-download"><i class="fas fa-download"></i></a>
                                     <button onclick="eliminar('${item.nombre_archivo}')" class="btn-delete"><i class="fas fa-trash"></i></button>
                                 </div>
                             </div>
@@ -224,14 +233,10 @@
             }
         }
 
-        // NUEVA FUNCIÓN DE CONTROL DE VIDEO REAL
         function controlVideoReal(id, accion) {
             const video = document.getElementById(id);
             if (accion === 'play') {
-                video.play().catch(e => {
-                    console.warn("Reproducción fallida:", e);
-                    alert("Haz click en el video para reproducir (restricción del navegador).");
-                });
+                video.play().catch(e => alert("Interactúa con la página primero para reproducir."));
             } else {
                 video.pause();
             }
@@ -253,7 +258,7 @@
 
         async function eliminar(n) {
             if (!confirm(`¿Eliminar permanentemente?`)) return;
-            await _supabase.storage.from(BUCKET_NAME).remove([`videos/${n}`]);
+            await _supabase.storage.from(BUCKET_NAME).remove([n]);
             cargar();
         }
 
@@ -265,6 +270,7 @@
         function cerrarSesion() { if(confirm("¿Cerrar sesión?")) window.location.reload(); }
 
         cargar();
+        // Recargar cada 30 segundos para ver nuevos videos convertidos
         setInterval(cargar, 30000);
     </script>
 </body>
