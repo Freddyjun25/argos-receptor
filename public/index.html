@@ -228,25 +228,45 @@
                         <div class="video-grid">`;
                 
                 vids.forEach(item => {
+    // Generamos un ID único para cada reproductor
+    const playerID = `player_${item.nombre_archivo.replace(/\D/g,'')}`;
+    
     section += `
         <div class="card">
-            <div class="card-visual">
-                <embed src="${item.url_video}" width="100%" height="100%" type="video/x-msvideo">
+            <div class="card-visual" style="background:#000; position:relative;">
+                <img id="${playerID}" src="${item.url_video}" 
+                     style="width:100%; height:100%; object-fit:contain; display:block;">
                 
-                <div style="position:absolute; bottom:0; background:rgba(0,0,0,0.5); width:100%; font-size:10px; color:white; text-align:center;">
-                    STREAM RAW AVI
+                <div class="video-controls" style="position:absolute; bottom:5px; width:90%; display:flex; gap:10px; justify-content:center;">
+                    <button onclick="controlVideo('${playerID}', 'pause')" class="btn-mini"><i class="fas fa-pause"></i></button>
+                    <button onclick="controlVideo('${playerID}', 'play', '${item.url_video}')" class="btn-mini"><i class="fas fa-play"></i></button>
                 </div>
             </div>
             <div class="card-info">
-                <div class="card-tag">REGISTRO SEGURO</div>
+                <div class="card-tag">MJPEG STREAMER</div>
                 <h4 class="card-title">${item.nombre_visible}</h4>
                 <div class="card-actions">
-                    <a href="${item.url_video}" download class="btn-download">DESCARGAR</a>
+                    <a href="${item.url_video}" download class="btn-download"><i class="fas fa-download"></i></a>
                     <button onclick="eliminar('${item.nombre_archivo}')" class="btn-delete"><i class="fas fa-trash"></i></button>
                 </div>
             </div>
         </div>`;
-       });
+      });
+
+// Función para simular Play/Pause en MJPEG
+function controlVideo(id, accion, url) {
+    const img = document.getElementById(id);
+    if (accion === 'pause') {
+        // Al "pausar" un MJPEG, simplemente desconectamos el src
+        img.dataset.savedSrc = img.src;
+        img.src = ""; 
+        console.log("Stream detenido");
+    } else {
+        // Al reanudar, volvemos a conectar el flujo de datos
+        img.src = url || img.dataset.savedSrc;
+        console.log("Stream reanudado");
+    }
+}
                 mainContent.innerHTML += section + `</div></div>`;
             }
         }
@@ -285,4 +305,5 @@
     </script>
 </body>
 </html>
+
 
