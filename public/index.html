@@ -123,66 +123,49 @@
         let vistaActual = 'grid';
 
         async function cargar() {
-    console.log("Intentando conectar a Supabase Storage...");
-    
-    // Listamos archivos de la carpeta 'videos'
-    const { data, error } = await _supabase.storage
-        .from(BUCKET_NAME)
-        .list('videos', {
-            limit: 100,
-            sortBy: { column: 'name', order: 'desc' }
-        });
+            console.log("Iniciando sincronización...");
+            try {
+                const { data, error } = await _supabase.storage
+                    .from('videos-receptor')
+                    .list('videos', { limit: 100, sortBy: { column: 'name', order: 'desc' } });
 
-    if (error) {
-        console.error("❌ Error en Storage:", error.message);
-        document.getElementById('msg').innerText = "Error: " + error.message;
-        return;
-    }
+                if (error) throw error;
 
-    if (!data || data.length === 0) {
-        console.log("⚠️ No hay archivos en la carpeta videos");
-        document.getElementById('msg').innerText = "NO HAY EVIDENCIAS GUARDADAS";
-        renderizar([]); // Enviamos lista vacía para limpiar el 'Sincronizando'
-        return;
-    }
+                if (!data || data.length === 0) {
+                    document.getElementById('msg').innerText = "CERO EVIDENCIAS ENCONTRADAS";
+                    renderizar([]); 
+                    return;
+                }
 
-    // Convertimos los archivos en objetos que renderizar entiende
-    todosLosVideos = data
-        .filter(f => f.name.endsWith('.avi'))
-        .map(file => {
-            const { data: urlData } = _supabase.storage
-                .from(BUCKET_NAME)
-                .getPublicUrl(`videos/${file.name}`);
-            
-            return {
-                nombre_archivo: file.name,
-                fecha: file.created_at || new Date().toISOString(),
-                url_video: urlData.publicUrl
-            };
-        });
+                todosLosVideos = data
+                    .filter(f => f.name.endsWith('.avi'))
+                    .map(file => {
+                        const { data: urlData } = _supabase.storage
+                            .from('videos-receptor')
+                            .getPublicUrl(`videos/${file.name}`);
+                        
+                        return {
+                            nombre_archivo: file.name,
+                            fecha: file.created_at,
+                            url_video: urlData.publicUrl
+                        };
+                    });
 
-    console.log("✅ Videos procesados:", todosLosVideos.length);
-    renderizar(todosLosVideos);
-    actualizarEstadisticas(todosLosVideos);
-}
-            });
+                renderizar(todosLosVideos);
+                actualizarEstadisticas(todosLosVideos);
 
-            renderizar(todosLosVideos);
-            actualizarEstadisticas(todosLosVideos);
-        }
+            } catch (err) {
+                console.error("Error crítico:", err.message);
+                document.getElementById('msg').innerText = "ERROR DE CONEXIÓN: " + err.message;
+            }
+        } // <--- Verifica que esta llave esté sola
 
         function renderizar(videos) {
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = '';
-            
-            // Actualizamos el mensaje de estado
-            const msgElement = document.getElementById('msg');
-            if (msgElement) {
-                msgElement.innerText = videos.length > 0 ? `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS` : "ESPERANDO DETECCIÓN...";
-            }
+            document.getElementById('msg').innerText = videos.length > 0 ? `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS` : "ESPERANDO DETECCIÓN...";
 
             const grupos = {};
-            // Agrupamos por fecha para que se vea organizado
             videos.forEach(item => {
                 const f = new Date(item.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
                 if (!grupos[f]) grupos[f] = [];
@@ -201,19 +184,18 @@
                         <div class="card">
                             <div style="height:160px; background:#222; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555;">
                                 <i class="fas fa-file-video fa-3x" style="color: var(--azul-claro);"></i>
-                                <span style="font-size:10px; margin-top:10px; color:#aaa;">FORMATO AVI (EVIDENCIA CRUDA)</span>
+                                <span style="font-size:10px; margin-top:10px; color:#aaa;">FORMATO AVI (EVIDENCIA)</span>
                             </div>
                             <div class="info">
-                                <h4 style="font-size:0.85rem; margin:0; color:var(--azul-argos); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.nombre_archivo}</h4>
-                                <div style="font-size:0.75rem; color:#777; margin:10px 0;"><i class="far fa-clock"></i> DETECTADO A LAS: ${hora}</div>
-                                
+                                <h4 style="font-size:0.85rem; margin:0; color:var(--azul-argos);">${item.nombre_archivo}</h4>
+                                <div style="font-size:0.75rem; color:#777; margin:10px 0;"><i class="far fa-clock"></i> HORA: ${hora}</div>
                                 <div style="display:flex; gap:5px; margin-top:10px;">
                                     <a href="${item.url_video}" download="${item.nombre_archivo}" target="_blank"
-                                       style="flex:1; background:var(--azul-claro); color:white; text-decoration:none; text-align:center; padding:8px; border-radius:5px; font-size:0.8rem; font-weight:bold; display: inline-block;">
+                                       style="flex:1; background:var(--azul-claro); color:white; text-decoration:none; text-align:center; padding:8px; border-radius:5px; font-size:0.8rem; font-weight:bold;">
                                        <i class="fas fa-download"></i> DESCARGAR
                                     </a>
                                     <button onclick="eliminar('${item.nombre_archivo}')" 
-                                            style="background:white; color:var(--rojo-alerta); border:1px solid #ffcccc; padding:8px; border-radius:5px; cursor:pointer; width: 40px;">
+                                            style="background:white; color:var(--rojo-alerta); border:1px solid #ffcccc; padding:8px; border-radius:5px; cursor:pointer;">
                                        <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </div>
@@ -222,37 +204,12 @@
                 });
                 mainContent.innerHTML += section + `</div></div>`;
             }
-        }
-
-            for (const [fecha, vids] of Object.entries(grupos)) {
-                let section = `<div class="date-section">
-                    <h4 class="date-header"><i class="far fa-calendar-alt"></i> ${fecha.toUpperCase()}</h4>
-                    <div class="video-grid">`;
-                
-                vids.forEach(item => {
-                    const hora = new Date(item.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    section += `
-                        <div class="card">
-                            <video controls preload="metadata" src="${item.url_video}#t=0.5"></video>
-                            <div class="info">
-                                <h4 style="font-size:0.9rem; margin:0; overflow:hidden; text-overflow:ellipsis;">${item.nombre_archivo}</h4>
-                                <div style="font-size:0.75rem; color:#777; margin-top:5px;"><i class="far fa-clock"></i> ${hora}</div>
-                                <div class="btn-group">
-                                    <button class="action-btn btn-download" onclick="window.open('${item.url_video}')"><i class="fas fa-external-link-alt"></i></button>
-                                    <button class="action-btn btn-delete" onclick="eliminar('${item.nombre_archivo}')"><i class="fas fa-trash-alt"></i></button>
-                                </div>
-                            </div>
-                        </div>`;
-                });
-                mainContent.innerHTML += section + `</div></div>`;
-            }
-        }
+        } // <--- Verifica que esta llave cierre la función
 
         async function eliminar(nombre) {
-            if (!confirm(`¿Desea eliminar permanentemente el video ${nombre}?`)) return;
-            const { error } = await _supabase.storage.from(BUCKET_NAME).remove([`videos/${nombre}`]);
-            if (error) alert("Error al borrar");
-            else cargar();
+            if (!confirm(`¿Borrar evidencia ${nombre}?`)) return;
+            await _supabase.storage.from('videos-receptor').remove([`videos/${nombre}`]);
+            cargar();
         }
 
         function toggleStats() {
@@ -260,28 +217,12 @@
             p.style.display = p.style.display === 'block' ? 'none' : 'block';
         }
 
-        function filtrar() {
-            const t = document.getElementById('searchInput').value.toLowerCase();
-            const f = document.getElementById('dateFilter').value;
-            renderizar(todosLosVideos.filter(v => v.nombre_archivo.toLowerCase().includes(t) && (f ? v.fecha.startsWith(f) : true)));
-        }
-
-        function actualizarEstadisticas(data) {
-            const hoy = new Date().toISOString().split('T')[0];
-            const alertasHoy = data.filter(a => a.fecha.startsWith(hoy)).length;
-            document.getElementById('stat-total').innerText = data.length;
-            document.getElementById('stat-hoy').innerText = alertasHoy;
-        }
-
-        function cerrarSesion() {
-            localStorage.removeItem('argos_session');
-            window.location.href = "login.html";
-        }
-
+        // Ejecución inicial
         cargar();
-        setInterval(cargar, 30000); // Auto-recarga cada 30 segundos
+        setInterval(cargar, 30000);
     </script>
 </body>
 </html>
+
 
 
