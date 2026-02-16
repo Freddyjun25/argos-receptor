@@ -70,7 +70,6 @@
             background: #000;
         }
 
-        /* Estilo para avisar que es un archivo rescatado (AVI) */
         .avi-placeholder {
             color: #94a3b8; text-align: center; padding: 20px; font-size: 0.8rem;
         }
@@ -93,7 +92,7 @@
             font-size: 10px; font-weight: 700; color: var(--verde-stats); 
             background: #ecfdf5; padding: 4px 8px; border-radius: 4px; margin-bottom: 10px;
         }
-        .card-tag.avi { color: #f59e0b; background: #fffbeb; } /* Color naranja para AVI */
+        .card-tag.avi { color: #f59e0b; background: #fffbeb; }
 
         .card-title { font-size: 0.95rem; margin: 0; color: var(--azul-argos); font-weight: 600; }
 
@@ -148,6 +147,11 @@
     </div>
 
     <script>
+        // --- CANDADO DE SEGURIDAD ---
+        if (sessionStorage.getItem("argos_sesion") !== "true") {
+            window.location.href = "/"; 
+        }
+
         const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
         const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk";
         const BUCKET_NAME = "videos-receptor";
@@ -163,7 +167,6 @@
 
                 if (error) throw error;
 
-                // AHORA PERMITIMOS MP4 Y AVI (Rescatados)
                 todosLosVideos = (data || [])
                     .filter(f => f.name.endsWith('.mp4') || f.name.endsWith('.avi')) 
                     .map(file => {
@@ -216,7 +219,6 @@
                 vids.forEach(item => {
                     const playerID = `player_${item.nombre_archivo.replace(/\D/g,'')}`;
                     
-                    // Si es AVI, mostramos un mensaje indicando que debe descargarse para verse fluido
                     const visualContent = item.esAvi 
                         ? `<div class="avi-placeholder"><i class="fas fa-file-video fa-3x"></i><br><br>Formato AVI (ESP32 Raw)<br>Descargar para ver fluido</div>`
                         : `<video id="${playerID}" preload="metadata" playsinline><source src="${item.url_video}" type="video/mp4">Tu navegador no soporta MP4.</video>
@@ -253,7 +255,7 @@
             const video = document.getElementById(id);
             if (!video) return;
             if (accion === 'play') {
-                video.play().catch(e => alert("Interactúa con la página primero para reproducir."));
+                video.play().catch(e => alert("Interactúa con la página primero."));
             } else {
                 video.pause();
             }
@@ -284,38 +286,35 @@
             p.style.display = p.style.display === 'block' ? 'none' : 'block';
         }
 
-        function cerrarSesion() { if(confirm("¿Cerrar sesión?")) window.location.reload(); }
+        // --- CERRAR SESIÓN MODIFICADO ---
+        function cerrarSesion() { 
+            if(confirm("¿Cerrar sesión?")) {
+                sessionStorage.removeItem("argos_sesion"); // Borra el candado
+                window.location.href = "/"; // Manda al login
+            } 
+        }
 
-// --- FUNCIÓN PARA OBTENER IP DEL ESP32 DESDE RENDER ---
         async function obtenerIpCamara() {
             try {
-                // Llamamos al endpoint que configuramos en index.js
                 const respuesta = await fetch('/get_esp_ip');
                 const data = await respuesta.json();
                 const el = document.getElementById('esp-ip');
-                
                 if (data.ip && data.ip !== "No reportada") {
                     el.innerText = data.ip;
-                    el.style.color = "#00e5ff"; // Cian brillante si hay conexión
+                    el.style.color = "#00e5ff";
                 } else {
                     el.innerText = "OFFLINE";
-                    el.style.color = "#ef4444"; // Rojo si no hay reporte reciente
+                    el.style.color = "#ef4444";
                 }
             } catch (error) {
-                console.error("Error al obtener IP:", error);
                 document.getElementById('esp-ip').innerText = "ERROR RED";
             }
         }
 
-        // Ejecutar inmediatamente y luego cada 20 segundos
         obtenerIpCamara();
         setInterval(obtenerIpCamara, 20000);
-
-        // Tus llamadas originales
         cargar();
         setInterval(cargar, 30000);
-        
     </script>
 </body>
 </html>
-
