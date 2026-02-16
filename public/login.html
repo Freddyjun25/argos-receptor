@@ -1,199 +1,375 @@
 <!DOCTYPE html>
+
 <html lang="es">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARGOS CORE - Autenticación</title>
+
+    <title>ARGOS CORE - Intelligence System</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
     <style>
+
         :root {
+
             --azul-argos: #001f3f;
+
             --azul-neon: #0074D9;
+
             --cyber-green: #2ECC40;
+
             --fondo: #050505;
-            --rojo: #FF4136;
+
         }
 
-        body {
-            font-family: 'Consolas', monospace;
-            background: var(--fondo);
-            color: #fff;
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
+        
+
+        body { 
+
+            font-family: 'Consolas', monospace; 
+
+            background: var(--fondo); 
+
+            color: #fff; 
+
+            margin: 0; 
+
         }
+
+
 
         header {
+
             border-bottom: 2px solid var(--azul-neon);
+
             padding: 20px;
+
             text-align: center;
+
             background: rgba(0, 116, 217, 0.1);
+
         }
 
-        .login-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+
+
+        /* GRID DE CÁMARAS */
+
+        .camera-grid {
+
+            display: grid;
+
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+
+            gap: 20px;
+
         }
 
-        .login-card {
+
+
+        .camera-card {
+
             background: #111;
+
             border: 1px solid #333;
+
             border-radius: 4px;
-            padding: 30px;
-            width: 100%;
-            max-width: 400px;
+
+            overflow: hidden;
+
             position: relative;
-            box-shadow: 0 0 20px rgba(0, 116, 217, 0.2);
+
         }
 
-        .login-card:hover { border-color: var(--azul-neon); }
 
-        .input-group { margin-bottom: 20px; }
-        
-        label { 
-            display: block; 
-            color: var(--azul-neon); 
-            font-size: 0.8rem; 
-            margin-bottom: 8px;
-            letter-spacing: 1px;
-        }
 
-        input {
+        .camera-card:hover { border-color: var(--azul-neon); }
+
+
+
+        .video-container {
+
             width: 100%;
-            padding: 12px;
+
+            height: 220px;
+
             background: #000;
-            border: 1px solid #333;
-            color: #fff;
-            font-family: 'Consolas', monospace;
-            box-sizing: border-box;
-            outline: none;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
         }
 
-        input:focus { border-color: var(--azul-neon); }
 
-        .btn-access {
+
+        /* Forzamos que el video ocupe el espacio sin desordenar */
+
+        video {
+
             width: 100%;
+
+            height: 100%;
+
+            object-fit: contain; /* Evita que se estire feo */
+
+            background: #000;
+
+        }
+
+
+
+        .info-panel {
+
             padding: 15px;
-            background: var(--azul-neon);
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
+
+            background: rgba(255,255,255,0.05);
+
+            font-size: 0.85rem;
+
+        }
+
+
+
+        .status-tag {
+
+            color: var(--cyber-green);
+
             font-weight: bold;
-            font-family: 'Consolas', monospace;
-            letter-spacing: 2px;
-            transition: 0.3s;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 5px;
+
+            margin-bottom: 10px;
+
         }
 
-        .btn-access:hover { 
-            background: #0056a3; 
-            box-shadow: 0 0 15px var(--azul-neon); 
+
+
+        .btn-action {
+
+            display: inline-block;
+
+            padding: 8px 12px;
+
+            background: var(--azul-neon);
+
+            color: white;
+
+            text-decoration: none;
+
+            border-radius: 3px;
+
+            font-size: 0.7rem;
+
+            margin-right: 5px;
+
+            cursor: pointer;
+
+            border: none;
+
         }
 
-        #error-msg {
-            color: var(--rojo);
-            font-size: 0.8rem;
-            margin-top: 15px;
-            text-align: center;
-            display: none;
-        }
 
-        /* Efecto de escaneo igual al Dashboard */
+
+        .btn-delete { background: #FF4136; }
+
+
+
+        .timestamp { color: #aaa; font-size: 0.75rem; }
+
+
+
+        /* Efecto de escaneo para el estilo universidad/seguridad */
+
         .scanline {
+
             width: 100%;
+
             height: 2px;
-            background: rgba(0, 116, 217, 0.1);
+
+            background: rgba(0, 255, 0, 0.1);
+
             position: absolute;
+
             top: 0;
-            left: 0;
+
             animation: scan 4s linear infinite;
+
             pointer-events: none;
+
         }
+
+
 
         @keyframes scan {
+
             0% { top: 0; }
+
             100% { top: 100%; }
+
         }
+
     </style>
+
 </head>
+
 <body>
 
+
+
 <header>
-    <h1 style="margin:0; letter-spacing: 5px;">ARGOS <span style="color:var(--azul-neon)">CORE</span></h1>
-    <p style="font-size: 0.8rem; color: var(--azul-neon)">CONTROL DE ACCESO AL SISTEMA DE INTELIGENCIA</p>
+
+    <h1 style="margin:0; letter-spacing: 5px;">ARGOS <span style="color:var(--azul-neon)">INTELLIGENCE</span></h1>
+
+    <p style="font-size: 0.8rem; color: var(--azul-neon)">SISTEMA DE MONITOREO UNIVERSITARIO - MODO PRUEBAS</p>
+
 </header>
 
-<div class="login-container">
-    <div class="login-card">
-        <div class="scanline"></div>
-        
-        <div id="status" style="margin-bottom: 20px; color: var(--azul-neon); font-size: 0.75rem;"> 
-            > ESPERANDO CREDENCIALES_
-        </div>
 
-        <div class="input-group">
-            <label><i class="fas fa-user"></i> ID_USUARIO</label>
-            <input type="text" id="username" placeholder="Ingrese usuario" autocomplete="off">
-        </div>
 
-        <div class="input-group">
-            <label><i class="fas fa-key"></i> CLAVE_DE_ACCESO</label>
-            <input type="password" id="password" placeholder="••••••••" onkeypress="checkEnter(event)">
-        </div>
+<div class="container">
 
-        <button class="btn-access" onclick="validar()">INICIAR PROTOCOLO</button>
-        
-        <div id="error-msg">
-            <i class="fas fa-exclamation-triangle"></i> ACCESO DENEGADO: CREDENCIALES INVÁLIDAS
-        </div>
-    </div>
+    <div id="msg" style="margin-bottom: 20px; color: var(--azul-neon)"> > Inicializando protocolo de sincronización...</div>
+
+    <div id="main-content" class="camera-grid"></div>
+
 </div>
 
+
+
 <script>
-    // Si ya existe sesión activa, saltar login
-    if (sessionStorage.getItem("argos_sesion") === "true") {
-        window.location.href = "/dashboard";
-    }
 
-    function checkEnter(e) {
-        if (e.key === "Enter") validar();
-    }
+    const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
 
-    function validar() {
-        const user = document.getElementById('username').value;
-        const pass = document.getElementById('password').value;
-        const error = document.getElementById('error-msg');
-        const status = document.getElementById('status');
+    const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk";
 
-        status.innerText = "> VALIDANDO IDENTIDAD...";
+    const BUCKET = "videos-receptor";
 
-        // --- TUS CREDENCIALES ---
-        // Puedes cambiar "admin" y "1234" por los que usabas antes
-        if (user === "admin" && pass === "1234") { 
-            sessionStorage.setItem("argos_sesion", "true");
-            status.style.color = "#2ECC40";
-            status.innerText = "> ACCESO CONCEDIDO. REDIRECCIONANDO...";
+
+
+    const _supabase = supabase.createClient(URL_SB, KEY_SB);
+
+
+
+    async function obtenerEvidencias() {
+
+        const { data, error } = await _supabase.storage.from(BUCKET).list('videos', {
+
+            limit: 100,
+
+            sortBy: { column: 'name', order: 'desc' }
+
+        });
+
+
+
+        if (error) return;
+
+
+
+        const container = document.getElementById('main-content');
+
+        container.innerHTML = '';
+
+
+
+        data.forEach(file => {
+
+            if (file.name === ".emptyFolderPlaceholder") return;
+
+
+
+            const { data: urlData } = _supabase.storage.from(BUCKET).getPublicUrl(`videos/${file.name}`);
+
             
-            setTimeout(() => {
-                window.location.href = "/dashboard";
-            }, 1000);
-        } else {
-            status.style.color = "#FF4136";
-            status.innerText = "> ERROR_DE_AUTENTICACIÓN";
-            error.style.display = "block";
-            
-            setTimeout(() => { 
-                error.style.display = "none"; 
-                status.style.color = "#0074D9";
-                status.innerText = "> ESPERANDO CREDENCIALES_";
-            }, 3000);
-        }
+
+            const card = `
+
+                <div class="camera-card">
+
+                    <div class="scanline"></div>
+
+                    <div class="video-container">
+
+                        <video controls muted poster="https://via.placeholder.com/400x220/000000/0074D9?text=CARGANDO+STREAM...">
+
+                            <source src="${urlData.publicUrl}" type="video/mp4">
+
+                            Format Not Supported
+
+                        </video>
+
+                    </div>
+
+                    <div class="info-panel">
+
+                        <div class="status-tag"><i class="fas fa-circle"></i> EN LINEA / EVIDENCIA</div>
+
+                        <div class="timestamp">ARCHIVO: ${file.name}</div>
+
+                        <div class="timestamp">FECHA: ${new Date(file.created_at).toLocaleString()}</div>
+
+                        <div style="margin-top:15px;">
+
+                            <a href="${urlData.publicUrl}" download class="btn-action"><i class="fas fa-download"></i> EXPORTAR</a>
+
+                            <button onclick="eliminar('${file.name}')" class="btn-action btn-delete"><i class="fas fa-trash"></i> BORRAR</button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            `;
+
+            container.innerHTML += card;
+
+        });
+
+        document.getElementById('msg').innerText = ` > SINCRO OK: ${data.length} REGISTROS ENCONTRADOS`;
+
     }
+
+
+
+    async function eliminar(nombre) {
+
+        if(!confirm("¿CONFIRMA ELIMINACIÓN DE EVIDENCIA?")) return;
+
+        await _supabase.storage.from(BUCKET).remove([`videos/${nombre}`]);
+
+        obtenerEvidencias();
+
+    }
+
+
+
+    obtenerEvidencias();
+
+    // Refresco cada 15 segundos para las pruebas
+
+    setInterval(obtenerEvidencias, 15000);
+
 </script>
 
+
+
 </body>
+
 </html>
