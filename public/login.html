@@ -7,7 +7,9 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
+            --azul-argos: #001f3f;
             --azul-neon: #0074D9;
+            --cyber-green: #2ECC40;
             --fondo: #050505;
             --rojo: #FF4136;
         }
@@ -15,51 +17,60 @@
         body {
             font-family: 'Consolas', monospace;
             background: var(--fondo);
-            color: white;
+            color: #fff;
+            margin: 0;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            border-bottom: 2px solid var(--azul-neon);
+            padding: 20px;
+            text-align: center;
+            background: rgba(0, 116, 217, 0.1);
+        }
+
+        .login-container {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0;
-            overflow: hidden;
-        }
-
-        /* Fondo con efecto de red */
-        body::before {
-            content: "";
-            position: absolute;
-            width: 100%; height: 100%;
-            background-image: radial-gradient(var(--azul-neon) 1px, transparent 1px);
-            background-size: 40px 40px;
-            opacity: 0.1;
-            z-index: -1;
+            padding: 20px;
         }
 
         .login-card {
-            background: rgba(0, 0, 0, 0.9);
-            border: 2px solid var(--azul-neon);
-            padding: 40px;
-            width: 350px;
-            text-align: center;
-            box-shadow: 0 0 20px rgba(0, 116, 217, 0.4);
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
             position: relative;
+            box-shadow: 0 0 20px rgba(0, 116, 217, 0.2);
         }
 
-        h1 { margin: 0 0 10px; letter-spacing: 5px; font-size: 1.5rem; }
-        p { color: var(--azul-neon); font-size: 0.8rem; margin-bottom: 30px; }
+        .login-card:hover { border-color: var(--azul-neon); }
 
-        .input-group { margin-bottom: 20px; text-align: left; }
-        label { display: block; font-size: 0.7rem; margin-bottom: 5px; color: var(--azul-neon); }
+        .input-group { margin-bottom: 20px; }
         
+        label { 
+            display: block; 
+            color: var(--azul-neon); 
+            font-size: 0.8rem; 
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
         input {
             width: 100%;
             padding: 12px;
-            background: #111;
+            background: #000;
             border: 1px solid #333;
-            color: white;
+            color: #fff;
+            font-family: 'Consolas', monospace;
             box-sizing: border-box;
             outline: none;
-            font-family: 'Consolas', monospace;
         }
 
         input:focus { border-color: var(--azul-neon); }
@@ -70,63 +81,119 @@
             background: var(--azul-neon);
             color: white;
             border: none;
+            border-radius: 3px;
             cursor: pointer;
             font-weight: bold;
+            font-family: 'Consolas', monospace;
             letter-spacing: 2px;
             transition: 0.3s;
         }
 
-        .btn-access:hover { background: #0056a3; box-shadow: 0 0 15px var(--azul-neon); }
+        .btn-access:hover { 
+            background: #0056a3; 
+            box-shadow: 0 0 15px var(--azul-neon); 
+        }
 
         #error-msg {
             color: var(--rojo);
             font-size: 0.8rem;
             margin-top: 15px;
+            text-align: center;
             display: none;
         }
 
+        /* Efecto de escaneo igual al Dashboard */
         .scanline {
-            width: 100%; height: 2px;
-            background: rgba(0, 116, 217, 0.2);
-            position: absolute; top: 0; left: 0;
-            animation: scan 3s linear infinite;
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 116, 217, 0.1);
+            position: absolute;
+            top: 0;
+            left: 0;
+            animation: scan 4s linear infinite;
+            pointer-events: none;
         }
 
-        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
     </style>
 </head>
 <body>
 
+<header>
+    <h1 style="margin:0; letter-spacing: 5px;">ARGOS <span style="color:var(--azul-neon)">CORE</span></h1>
+    <p style="font-size: 0.8rem; color: var(--azul-neon)">CONTROL DE ACCESO AL SISTEMA DE INTELIGENCIA</p>
+</header>
+
+<div class="login-container">
     <div class="login-card">
         <div class="scanline"></div>
-        <h1>ARGOS <span style="color:var(--azul-neon)">CORE</span></h1>
-        <p>RESTRICCIÓN DE ACCESO Nivel 4</p>
+        
+        <div id="status" style="margin-bottom: 20px; color: var(--azul-neon); font-size: 0.75rem;"> 
+            > ESPERANDO CREDENCIALES_
+        </div>
 
         <div class="input-group">
-            <label>CÓDIGO DE AUTORIZACIÓN</label>
+            <label><i class="fas fa-user"></i> ID_USUARIO</label>
+            <input type="text" id="username" placeholder="Ingrese usuario" autocomplete="off">
+        </div>
+
+        <div class="input-group">
+            <label><i class="fas fa-key"></i> CLAVE_DE_ACCESO</label>
             <input type="password" id="password" placeholder="••••••••" onkeypress="checkEnter(event)">
         </div>
 
-        <button class="btn-access" onclick="validar()">ACCEDER AL SISTEMA</button>
-        <div id="error-msg"> <i class="fas fa-exclamation-triangle"></i> CÓDIGO INCORRECTO</div>
+        <button class="btn-access" onclick="validar()">INICIAR PROTOCOLO</button>
+        
+        <div id="error-msg">
+            <i class="fas fa-exclamation-triangle"></i> ACCESO DENEGADO: CREDENCIALES INVÁLIDAS
+        </div>
     </div>
+</div>
 
-    <script>
-    // SOLO redirige si YA entró antes. Si no, se queda aquí.
+<script>
+    // Si ya existe sesión activa, saltar login
     if (sessionStorage.getItem("argos_sesion") === "true") {
         window.location.href = "/dashboard";
     }
 
+    function checkEnter(e) {
+        if (e.key === "Enter") validar();
+    }
+
     function validar() {
+        const user = document.getElementById('username').value;
         const pass = document.getElementById('password').value;
-        if (pass === "1234") { // Cambia 1234 por tu clave
+        const error = document.getElementById('error-msg');
+        const status = document.getElementById('status');
+
+        status.innerText = "> VALIDANDO IDENTIDAD...";
+
+        // --- TUS CREDENCIALES ---
+        // Puedes cambiar "admin" y "1234" por los que usabas antes
+        if (user === "admin" && pass === "1234") { 
             sessionStorage.setItem("argos_sesion", "true");
-            window.location.href = "/dashboard";
+            status.style.color = "#2ECC40";
+            status.innerText = "> ACCESO CONCEDIDO. REDIRECCIONANDO...";
+            
+            setTimeout(() => {
+                window.location.href = "/dashboard";
+            }, 1000);
         } else {
-            alert("Acceso Denegado");
+            status.style.color = "#FF4136";
+            status.innerText = "> ERROR_DE_AUTENTICACIÓN";
+            error.style.display = "block";
+            
+            setTimeout(() => { 
+                error.style.display = "none"; 
+                status.style.color = "#0074D9";
+                status.innerText = "> ESPERANDO CREDENCIALES_";
+            }, 3000);
         }
     }
 </script>
+
 </body>
 </html>
-
