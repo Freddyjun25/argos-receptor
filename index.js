@@ -104,6 +104,26 @@ app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
+// Variable para guardar la última IP reportada por el ESP32
+let ultimaIpEsp32 = "No reportada";
+
+// --- RUTA PARA EL REPORTE DE IP (Solución al error 404) ---
+app.get('/log_ip', (req, res) => {
+    const ip = req.query.ip;
+    if (ip) {
+        ultimaIpEsp32 = ip;
+        console.log(`📡 [DISPOSITIVO] Nueva IP recibida de ARGOS CORE: ${ip}`);
+        res.status(200).send("IP_REGISTRADA");
+    } else {
+        res.status(400).send("FALTA_IP");
+    }
+});
+
+// --- RUTA PARA CONSULTAR LA IP DESDE EL DASHBOARD ---
+app.get('/get_esp_ip', (req, res) => {
+    res.json({ ip: ultimaIpEsp32 });
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 SERVIDOR ARGOS ACTIVO`);
     console.log(`📂 Almacenamiento temporal en /tmp`);
