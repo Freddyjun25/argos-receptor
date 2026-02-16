@@ -112,29 +112,21 @@
     </div>
 
     <script>
-        // Si ya está logueado, mandarlo directo al dashboard
-        if (sessionStorage.getItem("argos_sesion") === "true") {
+    // SOLO redirige si YA entró antes. Si no, se queda aquí.
+    if (sessionStorage.getItem("argos_sesion") === "true") {
+        window.location.href = "/dashboard";
+    }
+
+    function validar() {
+        const pass = document.getElementById('password').value;
+        if (pass === "1234") { // Cambia 1234 por tu clave
+            sessionStorage.setItem("argos_sesion", "true");
             window.location.href = "/dashboard";
+        } else {
+            alert("Acceso Denegado");
         }
-
-        function checkEnter(e) {
-            if (e.key === "Enter") validar();
-        }
-
-        function validar() {
-            const pass = document.getElementById('password').value;
-            const error = document.getElementById('error-msg');
-
-            // --- TU CLAVE AQUÍ ---
-            if (pass === "1234") { 
-                sessionStorage.setItem("argos_sesion", "true");
-                window.location.href = "/dashboard";
-            } else {
-                error.style.display = "block";
-                document.getElementById('password').value = "";
-                setTimeout(() => { error.style.display = "none"; }, 3000);
-            }
-        }
-    </script>
+    }
+</script>
 </body>
 </html>
+
