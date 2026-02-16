@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SISTEMA ARGOS - Inteligencia de Seguridad</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
     <style>
         :root {
             --azul-argos: #003366;
@@ -19,6 +19,7 @@
         
         body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; color: var(--texto); }
 
+        /* HEADER INSTITUCIONAL */
         header {
             background: linear-gradient(135deg, var(--azul-argos) 0%, var(--azul-claro) 100%);
             color: white; padding: 25px 30px; text-align: center;
@@ -33,12 +34,30 @@
             padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;
         }
 
+        /* PANEL DE ANÁLISIS */
+        #statsPanel {
+            max-width: 1200px; margin: 20px auto; display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
+        .stat-card {
+            background: white; padding: 20px; border-radius: 12px; text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-bottom: 4px solid var(--azul-claro);
+        }
+        .stat-card h3 { margin: 0; font-size: 0.8rem; color: #64748b; text-transform: uppercase; }
+        .stat-card p { margin: 10px 0 0; font-size: 1.8rem; font-weight: bold; color: var(--azul-argos); }
+        
+        .charts-container {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: white;
+            padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        /* TOOLBAR */
         .toolbar {
             max-width: 1200px; margin: 20px auto; padding: 15px 25px;
             background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between;
         }
-
         .btn-stats-toggle {
             background: var(--azul-argos); color: white; border: none; padding: 12px 20px;
             border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 10px;
@@ -46,6 +65,7 @@
 
         .container { max-width: 1200px; margin: 0 auto 30px; padding: 0 20px; }
         
+        /* DISEÑO DE TARJETAS ENTERPRISE */
         .date-header { 
             color: var(--azul-argos); border-left: 4px solid var(--azul-claro); 
             padding-left: 15px; margin: 40px 0 20px; font-size: 1.1rem; text-transform: uppercase;
@@ -61,30 +81,11 @@
         .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
 
         .card-visual {
-            height: 180px; background: #000; position: relative; overflow: hidden;
-            display: flex; align-items: center; justify-content: center;
+            height: 150px; background: #f8fafc; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; border-bottom: 1px solid #edf2f7;
         }
-
-        video {
-            width: 100%; height: 100%; object-fit: contain; 
-            background: #000;
-        }
-
-        .avi-placeholder {
-            color: #94a3b8; text-align: center; padding: 20px; font-size: 0.8rem;
-        }
-
-        .video-controls {
-            position: absolute; bottom: 10px; width: 100%; 
-            display: flex; justify-content: center; gap: 10px; z-index: 5;
-        }
-
-        .btn-mini {
-            background: rgba(0, 51, 102, 0.85); color: white; border: none;
-            width: 35px; height: 35px; border-radius: 50%; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; transition: 0.2s;
-        }
-        .btn-mini:hover { background: var(--azul-claro); transform: scale(1.1); }
+        .card-visual i { color: #64748b; font-size: 2.5rem; margin-bottom: 10px; }
+        .card-visual span { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
 
         .card-info { padding: 18px; }
         .card-tag { 
@@ -92,9 +93,7 @@
             font-size: 10px; font-weight: 700; color: var(--verde-stats); 
             background: #ecfdf5; padding: 4px 8px; border-radius: 4px; margin-bottom: 10px;
         }
-        .card-tag.avi { color: #f59e0b; background: #fffbeb; }
-
-        .card-title { font-size: 0.95rem; margin: 0; color: var(--azul-argos); font-weight: 600; }
+        .card-title { font-size: 1rem; margin: 0; color: var(--azul-argos); font-weight: 600; line-height: 1.4; }
 
         .card-actions { display: flex; gap: 10px; margin-top: 18px; }
         .btn-download {
@@ -104,23 +103,17 @@
         }
         .btn-delete {
             background: white; color: var(--rojo-alerta); border: 1px solid #fee2e2;
-            padding: 10px; border-radius: 6px; cursor: pointer;
+            padding: 10px; border-radius: 6px; cursor: pointer; transition: 0.2s;
         }
+        .btn-delete:hover { background: #fff1f2; }
 
-        #statsPanel { display: none; background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-        .stat-card { text-align: center; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
-        .stat-card p { font-size: 1.5rem; font-weight: bold; margin: 5px 0; color: var(--azul-argos); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-
     <header>
         <h1>SISTEMA ARGOS CORE</h1>
         <p>Centro de Inteligencia y Evidencias</p>
-        <div id="ip-monitor" style="margin-top: 10px; font-family: monospace; font-size: 0.85rem; color: #00e5ff; display: flex; align-items: center; justify-content: center; gap: 8px;">
-            <i class="fas fa-network-wired"></i> IP LOCAL: <span id="esp-ip" style="font-weight: bold;">BUSCANDO...</span>
-        </div>
         <button class="btn-logout" onclick="cerrarSesion()"><i class="fas fa-power-off"></i> SALIR</button>
     </header>
 
@@ -129,29 +122,31 @@
             <button class="btn-stats-toggle" onclick="toggleStats()">
                 <i class="fas fa-chart-line"></i> ANÁLISIS DE DATOS
             </button>
-            <input type="text" id="searchInput" placeholder="Buscar video..." onkeyup="filtrar()" style="padding:10px; border-radius:8px; border:1px solid #ddd; width: 250px; outline: none;">
+            <input type="text" id="searchInput" placeholder="Buscar por fecha u hora..." onkeyup="filtrar()" style="padding:10px; border-radius:8px; border:1px solid #ddd; width: 250px; outline: none;">
         </div>
-        <input type="date" id="dateFilter" onchange="filtrar()" style="padding:10px; border-radius:8px; border:1px solid #ddd; outline: none;">
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <input type="date" id="dateFilter" onchange="filtrar()" style="padding:10px; border-radius:8px; border:1px solid #ddd; outline: none;">
+        </div>
     </div>
 
     <div id="statsPanel" class="container">
         <div class="stats-grid">
             <div class="stat-card"><h3>Total Evidencias</h3><p id="stat-total">0</p></div>
             <div class="stat-card"><h3>Alertas Hoy</h3><p id="stat-hoy">0</p></div>
+            <div class="stat-card"><h3>Estado del Sistema</h3><p style="font-size: 1rem; color: var(--verde-stats);">SINCRO OK</p></div>
+        </div>
+        <div class="charts-container">
+            <canvas id="chartSemanal"></canvas>
+            <canvas id="chartHorario"></canvas>
         </div>
     </div>
 
     <div class="container">
-        <h3 id="msg" style="color: #64748b; font-weight: 500; font-size: 0.9rem;">Sincronizando con Storage...</h3>
+        <h3 id="msg" style="color: #64748b; font-weight: 500;">Sincronizando con Storage...</h3>
         <div id="main-content"></div>
     </div>
 
     <script>
-    // CANDADO: Si no hay sesión, regresa al login (/)
-    if (sessionStorage.getItem("argos_sesion") !== "true") {
-        window.location.href = "/";
-    }
-
         const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
         const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk";
         const BUCKET_NAME = "videos-receptor";
@@ -163,48 +158,61 @@
             try {
                 const { data, error } = await _supabase.storage
                     .from(BUCKET_NAME)
-                    .list('', { limit: 100, sortBy: { column: 'name', order: 'desc' } });
+                    .list('videos', { limit: 100, sortBy: { column: 'name', order: 'desc' } });
 
                 if (error) throw error;
 
                 todosLosVideos = (data || [])
-                    .filter(f => f.name.endsWith('.mp4') || f.name.endsWith('.avi')) 
+                    .filter(f => f.name.endsWith('.avi'))
                     .map(file => {
-                        const { data: urlData } = _supabase.storage.from(BUCKET_NAME).getPublicUrl(file.name);
+                        const { data: urlData } = _supabase.storage
+                            .from(BUCKET_NAME)
+                            .getPublicUrl(`videos/${file.name}`);
                         
-                        let nombreLimpio = file.name.replace('video_', '').replace('camara_', '').replace('rescatado_', '').replace('evidencia_', '').replace('.mp4', '').replace('.avi', '');
-                        let fechaLegible = "Registro #" + nombreLimpio;
-                        
-                        if (!isNaN(nombreLimpio)) {
-                            const dateObj = new Date(parseInt(nombreLimpio));
-                            fechaLegible = dateObj.toLocaleString('es-ES');
+                        // PROCESAMIENTO DE NOMBRE A: 01/01/2025 12:20 PM
+                        const partes = file.name.replace('.avi', '').split('_');
+                        let formateado = file.name;
+
+                        if (partes.length === 2) {
+                            const d = partes[0]; 
+                            const t = partes[1];
+                            const fecha = `${d.substring(0,2)}/${d.substring(2,4)}/${d.substring(4,8)}`;
+                            
+                            let h = parseInt(t.substring(0,2));
+                            const m = t.substring(2,4);
+                            const ampm = h >= 12 ? 'PM' : 'AM';
+                            h = h % 12 || 12;
+                            formateado = `${fecha} ${h}:${m} ${ampm}`;
                         }
                         
                         return {
                             nombre_archivo: file.name,
-                            nombre_visible: fechaLegible,
+                            nombre_visible: formateado,
                             fecha_creacion: file.created_at,
-                            url_video: urlData.publicUrl,
-                            esAvi: file.name.endsWith('.avi')
+                            url_video: urlData.publicUrl
                         };
                     });
 
                 renderizar(todosLosVideos);
                 actualizarEstadisticas(todosLosVideos);
+
             } catch (err) {
-                document.getElementById('msg').innerText = "ERROR: " + err.message;
+                document.getElementById('msg').innerText = "ERROR DE CONEXIÓN: " + err.message;
             }
+        }
+
+        function actualizarEstadisticas(data) {
+            const hoy = new Date().toISOString().split('T')[0];
+            const alertasHoy = data.filter(v => v.fecha_creacion && v.fecha_creacion.startsWith(hoy)).length;
+            
+            document.getElementById('stat-total').innerText = data.length;
+            document.getElementById('stat-hoy').innerText = alertasHoy;
         }
 
         function renderizar(videos) {
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = '';
-            document.getElementById('msg').innerText = `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS DISPONIBLES`;
-
-            if(videos.length === 0) {
-                mainContent.innerHTML = '<p style="text-align:center; color:#94a3b8;">No hay evidencias disponibles.</p>';
-                return;
-            }
+            document.getElementById('msg').innerText = videos.length > 0 ? `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS ENCONTRADAS` : "SIN REGISTROS RECIENTES";
 
             const grupos = {};
             videos.forEach(item => {
@@ -214,71 +222,54 @@
             });
 
             for (const [fecha, vids] of Object.entries(grupos)) {
-                let sectionHTML = `<div class="date-section"><h4 class="date-header"><i class="fas fa-calendar-day"></i> ${fecha.toUpperCase()}</h4><div class="video-grid">`;
+                let section = `
+                    <div class="date-section">
+                        <h4 class="date-header"><i class="fas fa-calendar-day"></i> ${fecha.toUpperCase()}</h4>
+                        <div class="video-grid">`;
                 
                 vids.forEach(item => {
-                    const playerID = `player_${item.nombre_archivo.replace(/\D/g,'')}`;
-                    
-                    const visualContent = item.esAvi 
-                        ? `<div class="avi-placeholder"><i class="fas fa-file-video fa-3x"></i><br><br>Formato AVI (ESP32 Raw)<br>Descargar para ver fluido</div>`
-                        : `<video id="${playerID}" preload="metadata" playsinline><source src="${item.url_video}" type="video/mp4">Tu navegador no soporta MP4.</video>
-                           <div class="video-controls">
-                               <button onclick="controlVideoReal('${playerID}', 'play')" class="btn-mini"><i class="fas fa-play"></i></button>
-                               <button onclick="controlVideoReal('${playerID}', 'pause')" class="btn-mini"><i class="fas fa-pause"></i></button>
-                           </div>`;
-
-                    sectionHTML += `
+                    section += `
                         <div class="card">
                             <div class="card-visual">
-                                ${visualContent}
+                                <i class="fas fa-file-video"></i>
+                                <span>FORMATO AVI (EVIDENCIA)</span>
                             </div>
                             <div class="card-info">
-                                <div class="card-tag ${item.esAvi ? 'avi' : ''}">
-                                    <i class="fas fa-shield-alt"></i> ${item.esAvi ? 'EVIDENCIA AVI (RAW)' : 'EVIDENCIA MP4'}
-                                </div>
+                                <div class="card-tag"><i class="fas fa-shield-check"></i> REGISTRO SEGURO</div>
                                 <h4 class="card-title">${item.nombre_visible}</h4>
                                 <div class="card-actions">
-                                    <a href="${item.url_video}" download="${item.nombre_archivo}" class="btn-download">
+                                    <a href="${item.url_video}" download="${item.nombre_archivo}" target="_blank" class="btn-download">
                                         <i class="fas fa-download"></i> DESCARGAR
                                     </a>
-                                    <button onclick="eliminar('${item.nombre_archivo}')" class="btn-delete"><i class="fas fa-trash"></i></button>
+                                    <button onclick="eliminar('${item.nombre_archivo}')" class="btn-delete">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>`;
                 });
-                sectionHTML += `</div></div>`;
-                mainContent.innerHTML += sectionHTML;
+                mainContent.innerHTML += section + `</div></div>`;
             }
-        }
-
-        function controlVideoReal(id, accion) {
-            const video = document.getElementById(id);
-            if (!video) return;
-            if (accion === 'play') {
-                video.play().catch(e => alert("Interactúa con la página primero."));
-            } else {
-                video.pause();
-            }
-        }
-
-        function actualizarEstadisticas(data) {
-            const hoy = new Date().toISOString().split('T')[0];
-            const alertasHoy = data.filter(v => v.fecha_creacion.startsWith(hoy)).length;
-            document.getElementById('stat-total').innerText = data.length;
-            document.getElementById('stat-hoy').innerText = alertasHoy;
         }
 
         function filtrar() {
-            const bus = document.getElementById('searchInput').value.toLowerCase();
-            const fec = document.getElementById('dateFilter').value;
-            const res = todosLosVideos.filter(v => v.nombre_visible.toLowerCase().includes(bus) && (!fec || v.fecha_creacion.startsWith(fec)));
-            renderizar(res);
+            const busqueda = document.getElementById('searchInput').value.toLowerCase();
+            const fechaFiltro = document.getElementById('dateFilter').value;
+            
+            const filtrados = todosLosVideos.filter(v => {
+                const coincide = v.nombre_visible.toLowerCase().includes(busqueda);
+                const coincideFecha = !fechaFiltro || v.fecha_creacion.startsWith(fechaFiltro);
+                return coincide && coincideFecha;
+            });
+            renderizar(filtrados);
         }
 
-        async function eliminar(n) {
-            if (!confirm(`¿Eliminar permanentemente?`)) return;
-            await _supabase.storage.from(BUCKET_NAME).remove([n]);
-            cargar();
+        async function eliminar(nombre) {
+            if (!confirm(`¿Eliminar evidencia de forma permanente?\n${nombre}`)) return;
+            try {
+                await _supabase.storage.from(BUCKET_NAME).remove([`videos/${nombre}`]);
+                cargar();
+            } catch (e) { alert("Error al eliminar el archivo"); }
         }
 
         function toggleStats() {
@@ -286,36 +277,12 @@
             p.style.display = p.style.display === 'block' ? 'none' : 'block';
         }
 
-        // --- CERRAR SESIÓN MODIFICADO ---
-        function cerrarSesion() { 
-            if(confirm("¿Cerrar sesión?")) {
-                sessionStorage.removeItem("argos_sesion"); // Borra el candado
-                window.location.href = "/"; // Manda al login
-            } 
+        function cerrarSesion() {
+            if(confirm("¿Desea cerrar la sesión del sistema?")) window.location.reload();
         }
 
-        async function obtenerIpCamara() {
-            try {
-                const respuesta = await fetch('/get_esp_ip');
-                const data = await respuesta.json();
-                const el = document.getElementById('esp-ip');
-                if (data.ip && data.ip !== "No reportada") {
-                    el.innerText = data.ip;
-                    el.style.color = "#00e5ff";
-                } else {
-                    el.innerText = "OFFLINE";
-                    el.style.color = "#ef4444";
-                }
-            } catch (error) {
-                document.getElementById('esp-ip').innerText = "ERROR RED";
-            }
-        }
-
-        obtenerIpCamara();
-        setInterval(obtenerIpCamara, 20000);
         cargar();
-        setInterval(cargar, 30000);
+        setInterval(cargar, 60000); 
     </script>
 </body>
 </html>
-
