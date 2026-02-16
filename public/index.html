@@ -119,6 +119,9 @@
     <header>
         <h1>SISTEMA ARGOS CORE</h1>
         <p>Centro de Inteligencia y Evidencias</p>
+        <div id="ip-monitor" style="margin-top: 10px; font-family: monospace; font-size: 0.85rem; color: #00e5ff; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i class="fas fa-network-wired"></i> IP LOCAL: <span id="esp-ip" style="font-weight: bold;">BUSCANDO...</span>
+        </div>
         <button class="btn-logout" onclick="cerrarSesion()"><i class="fas fa-power-off"></i> SALIR</button>
     </header>
 
@@ -283,8 +286,36 @@
 
         function cerrarSesion() { if(confirm("¿Cerrar sesión?")) window.location.reload(); }
 
+// --- FUNCIÓN PARA OBTENER IP DEL ESP32 DESDE RENDER ---
+        async function obtenerIpCamara() {
+            try {
+                // Llamamos al endpoint que configuramos en index.js
+                const respuesta = await fetch('/get_esp_ip');
+                const data = await respuesta.json();
+                const el = document.getElementById('esp-ip');
+                
+                if (data.ip && data.ip !== "No reportada") {
+                    el.innerText = data.ip;
+                    el.style.color = "#00e5ff"; // Cian brillante si hay conexión
+                } else {
+                    el.innerText = "OFFLINE";
+                    el.style.color = "#ef4444"; // Rojo si no hay reporte reciente
+                }
+            } catch (error) {
+                console.error("Error al obtener IP:", error);
+                document.getElementById('esp-ip').innerText = "ERROR RED";
+            }
+        }
+
+        // Ejecutar inmediatamente y luego cada 20 segundos
+        obtenerIpCamara();
+        setInterval(obtenerIpCamara, 20000);
+
+        // Tus llamadas originales
         cargar();
         setInterval(cargar, 30000);
+        
     </script>
 </body>
 </html>
+
