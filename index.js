@@ -16,17 +16,17 @@ const supabase = createClient(
     { auth: { persistSession: false } }
 );
 
-// --- RUTAS DE ACCESO Y SEGURIDAD ---
+// --- CONFIGURACIÓN DE RUTAS Y SEGURIDAD ---
 
-// Servir archivos estáticos (CSS, Imágenes, JS de la carpeta public)
-app.use(express.static(path.join(__dirname, 'public')));
+// IMPORTANTE: Agregamos { index: false } para que Express NO sirva el index.html automáticamente
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
-// 1. La raíz "/" ahora SIEMPRE entrega el Login
+// 1. La raíz "/" ahora sirve EXCLUSIVAMENTE el login
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// 2. Nueva ruta para el Dashboard (el index.html original)
+// 2. Ruta protegida para el Dashboard
 app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -83,7 +83,7 @@ app.get('/log_ip', (req, res) => {
     const ip = req.query.ip;
     if (ip) {
         ultimaIpEsp32 = ip;
-        console.log(`📡 [DISPOSITIVO] Nueva IP recibida: ${ip}`);
+        console.log(`📡 [DISPOSITIVO] Nueva IP recibida de ARGOS CORE: ${ip}`);
         res.status(200).send("IP_REGISTRADA");
     } else { res.status(400).send("FALTA_IP"); }
 });
@@ -94,4 +94,6 @@ app.get('/get_esp_ip', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 SERVIDOR ARGOS PROTEGIDO Y ACTIVO`);
+    console.log(`🔗 Acceso principal: /`);
+    console.log(`🔗 Panel de control: /dashboard`);
 });
