@@ -16,124 +16,90 @@
             --rojo: #ef4444;
         }
 
-        body { 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
-            background: var(--fondo); 
-            margin: 0; 
-            color: var(--texto);
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; color: var(--texto); }
         
         header {
-            background: var(--azul-argos);
-            color: white; padding: 15px; text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            position: sticky; top: 0; z-index: 100;
+            background: var(--azul-argos); color: white; padding: 15px; text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 100;
         }
-        header h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; font-weight: 800; }
+        header h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; text-transform: uppercase; }
         
         #ip-indicator { 
             margin-top: 8px; font-weight: 700; font-size: 0.85rem; 
-            background: rgba(255,255,255,0.15); display: inline-block;
-            padding: 4px 12px; border-radius: 4px;
+            background: rgba(255,255,255,0.15); display: inline-block; padding: 4px 12px; border-radius: 4px;
         }
 
         .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
         
+        /* TOOLBAR CON SELECTOR DE VISTA */
         .toolbar {
             background: white; border-radius: 8px; padding: 12px;
             display: flex; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             margin-bottom: 25px; align-items: center;
         }
+        .btn-view {
+            background: #f1f5f9; color: var(--azul-argos); border: 1px solid #e2e8f0;
+            padding: 10px; border-radius: 6px; cursor: pointer; transition: 0.2s;
+        }
+        .btn-view.active { background: var(--azul-argos); color: white; }
+
         .search-container { flex: 1; }
         .search-container input {
-            width: 100%; padding: 10px; border-radius: 6px;
-            border: 1px solid #d1d5db; outline: none; font-size: 0.9rem;
+            width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #d1d5db; outline: none;
         }
 
-        /* ESTILO SEPARADOR POR DÍA */
+        /* SECCIONES Y GRIDS */
         .day-section { margin-bottom: 40px; }
-        
         .day-header {
-            background: #e2e8f0;
-            color: var(--azul-argos);
-            padding: 10px 15px;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: 800;
-            margin-bottom: 20px;
-            border-left: 6px solid var(--azul-claro);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            background: #e2e8f0; color: var(--azul-argos); padding: 10px 15px;
+            border-radius: 6px; font-size: 0.9rem; font-weight: 800; margin-bottom: 15px;
+            border-left: 6px solid var(--azul-claro); text-transform: uppercase;
         }
 
+        /* MODO CUADRÍCULA (POR DEFECTO) */
         .video-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
-            gap: 25px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px;
         }
+        .video-grid .card:hover { transform: scale(1.12); z-index: 50; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
 
-        /* TARJETA CON EFECTO ZOOM */
+        /* MODO LISTA */
+        .video-list { display: flex; flex-direction: column; gap: 10px; }
+        .video-list .card { display: flex; flex-direction: row; height: 100px; align-items: center; }
+        .video-list .card-visual { width: 150px; height: 100px; }
+        .video-list video { height: 100%; }
+        .video-list .card-info { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
+        .video-list .card-footer { border: none; margin: 0; padding: 0; }
+
         .card { 
-            background: white; 
-            border-radius: 12px; 
-            overflow: hidden; 
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
-            border: 1px solid #e5e7eb;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
-            position: relative;
-            z-index: 1;
+            background: white; border-radius: 12px; overflow: hidden; 
+            border: 1px solid #e5e7eb; transition: transform 0.3s ease; position: relative;
         }
-
-        .card:hover { 
-            transform: scale(1.12);
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
-            z-index: 50;
-        }
-
-        video { 
-            width: 100%; 
-            aspect-ratio: 4/3; 
-            display: block; 
-            object-fit: contain;
-            background: #000;
-        }
-
+        video { width: 100%; aspect-ratio: 4/3; display: block; object-fit: contain; background: #000; }
         .card-info { padding: 12px; }
-        .card-title { font-size: 0.9rem; margin: 0; color: var(--azul-argos); font-weight: 700; }
-        .card-tag { font-size: 0.65rem; font-weight: 800; color: var(--verde-tag); text-transform: uppercase; margin-bottom: 5px; display: block; }
+        .card-title { font-size: 0.85rem; margin: 0; color: var(--azul-argos); font-weight: 700; }
+        .card-tag { font-size: 0.6rem; font-weight: 800; color: var(--verde-tag); text-transform: uppercase; }
+        .card-footer { display: flex; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f3f4f6; }
 
-        .card-footer { 
-            display: flex; gap: 8px; margin-top: 10px; padding-top: 10px; 
-            border-top: 1px solid #f3f4f6; 
-        }
-
-        .btn-download { 
-            background: var(--azul-argos); color: white; text-decoration: none; 
-            padding: 8px; border-radius: 5px; font-size: 0.75rem; flex: 1; 
-            text-align: center; font-weight: bold;
-        }
-
-        .btn-delete { color: var(--rojo); background: none; border: none; cursor: pointer; padding: 5px; font-size: 1.1rem; }
-        
-        .status-online { color: #10b981; }
-        .status-offline { color: #f87171; }
+        .btn-download { background: var(--azul-argos); color: white; text-decoration: none; padding: 8px 12px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; }
+        .btn-delete { color: var(--rojo); background: none; border: none; cursor: pointer; font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
     <header>
         <h1>SISTEMA ARGOS CORE</h1>
-        <div id="ip-indicator">
-            <i class="fas fa-circle-notch fa-spin"></i> SINCRONIZANDO RED...
-        </div>
+        <div id="ip-indicator"><i class="fas fa-sync fa-spin"></i> CONECTANDO...</div>
     </header>
 
     <div class="container">
         <div class="toolbar">
+            <button id="btnGrid" class="btn-view active" onclick="setVista('grid')"><i class="fas fa-th-large"></i></button>
+            <button id="btnList" class="btn-view" onclick="setVista('list')"><i class="fas fa-list"></i></button>
+            
             <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Filtrar evidencias..." onkeyup="filtrar()">
+                <input type="text" id="searchInput" placeholder="Buscar registros..." onkeyup="filtrar()">
             </div>
-            <input type="date" id="dateFilter" onchange="filtrar()" style="padding:9px; border-radius:6px; border:1px solid #d1d5db;">
+            <input type="date" id="dateFilter" onchange="filtrar()" style="padding:8px; border-radius:6px; border:1px solid #d1d5db;">
         </div>
 
         <div id="main-content"></div>
@@ -146,6 +112,7 @@
 
         const _supabase = supabase.createClient(URL_SB, KEY_SB);
         let todosLosVideos = [];
+        let vistaActual = 'grid'; // Por defecto
 
         async function checkSystemStatus() {
             try {
@@ -153,51 +120,43 @@
                 const data = await res.json();
                 const indicator = document.getElementById('ip-indicator');
                 if (data.ip && data.ip !== "Buscando...") {
-                    indicator.innerHTML = `<span class="status-online"><i class="fas fa-network-wired"></i> ESP32 IP: ${data.ip}</span>`;
-                } else {
-                    indicator.innerHTML = `<span class="status-offline"><i class="fas fa-exclamation-triangle"></i> ESP32 DESCONECTADO</span>`;
+                    indicator.innerHTML = `<i class="fas fa-network-wired"></i> ESP32 IP: ${data.ip}`;
                 }
             } catch (e) {}
         }
 
         function formatHora(iso) {
             const d = new Date(iso);
-            const dia = d.getDate().toString().padStart(2, '0');
-            const mes = (d.getMonth() + 1).toString().padStart(2, '0');
-            const anio = d.getFullYear();
             let hh = d.getHours();
             const mm = d.getMinutes().toString().padStart(2, '0');
             const ampm = hh >= 12 ? 'pm' : 'am';
             hh = hh % 12 || 12;
-            return `${dia}/${mes}/${anio} ${hh}:${mm}${ampm}`;
+            return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth()+1).toString().padStart(2, '0')}/${d.getFullYear()} ${hh}:${mm}${ampm}`;
         }
 
-        // Formatea el encabezado del día (Ej: LUNES, 16 DE FEBRERO DE 2026)
         function formatDiaHeader(iso) {
-            const d = new Date(iso);
-            return d.toLocaleDateString('es-ES', { 
+            return new Date(iso).toLocaleDateString('es-ES', { 
                 weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
             }).toUpperCase();
         }
 
+        function setVista(modo) {
+            vistaActual = modo;
+            document.getElementById('btnGrid').classList.toggle('active', modo === 'grid');
+            document.getElementById('btnList').classList.toggle('active', modo === 'list');
+            renderizar(todosLosVideos);
+        }
+
         async function cargar() {
-            try {
-                const response = await fetch('/api/lista-videos');
-                todosLosVideos = await response.json();
-                renderizar(todosLosVideos);
-            } catch (e) { console.error("Error al cargar"); }
+            const response = await fetch('/api/lista-videos');
+            todosLosVideos = await response.json();
+            renderizar(todosLosVideos);
         }
 
         function renderizar(videos) {
             const container = document.getElementById('main-content');
             container.innerHTML = '';
 
-            if (videos.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:50px;">SIN EVIDENCIAS REGISTRADAS</div>';
-                return;
-            }
-
-            // Agrupar videos por fecha
             const grupos = {};
             videos.forEach(v => {
                 const dia = formatDiaHeader(v.created);
@@ -205,48 +164,36 @@
                 grupos[dia].push(v);
             });
 
-            // Generar HTML por cada grupo
             for (const [dia, vids] of Object.entries(grupos)) {
                 const section = document.createElement('div');
                 section.className = 'day-section';
                 
-                let htmlHeader = `<div class="day-header">${dia}</div>`;
-                let htmlGrid = `<div class="video-grid">`;
+                let htmlGrid = `<div class="${vistaActual === 'grid' ? 'video-grid' : 'video-list'}">`;
 
                 vids.forEach(file => {
                     const esVideo = file.name.toLowerCase().endsWith('.mp4');
-                    const horaPretty = formatHora(file.created);
-
                     htmlGrid += `
                         <div class="card">
                             <div class="card-visual">
-                                ${esVideo ? 
-                                    `<video controls preload="metadata"><source src="${file.url}" type="video/mp4"></video>` : 
-                                    `<div style="padding:40px; text-align:center; color:#94a3b8;"><i class="fas fa-file-video fa-3x"></i><br><small>AVI</small></div>`
-                                }
+                                ${esVideo ? `<video controls preload="metadata"><source src="${file.url}" type="video/mp4"></video>` : `<div style="padding:20px;text-align:center"><i class="fas fa-file-video fa-2x"></i></div>`}
                             </div>
                             <div class="card-info">
-                                <span class="card-tag">Registro Argos</span>
-                                <h4 class="card-title">${horaPretty}</h4>
+                                <div><span class="card-tag">Argos Core</span><h4 class="card-title">${formatHora(file.created)}</h4></div>
                                 <div class="card-footer">
-                                    <a href="${file.url}" download target="_blank" class="btn-download"><i class="fas fa-cloud-download-alt"></i> DESCARGAR</a>
+                                    <a href="${file.url}" download target="_blank" class="btn-download">GUARDAR</a>
                                     <button onclick="eliminar('${file.name}')" class="btn-delete"><i class="fas fa-trash-alt"></i></button>
                                 </div>
                             </div>
                         </div>`;
                 });
 
-                htmlGrid += `</div>`;
-                section.innerHTML = htmlHeader + htmlGrid;
+                section.innerHTML = `<div class="day-header">${dia}</div>` + htmlGrid + `</div>`;
                 container.appendChild(section);
             }
         }
 
         async function eliminar(n) {
-            if (confirm("¿Eliminar evidencia permanentemente?")) {
-                await _supabase.storage.from(BUCKET).remove([n]);
-                cargar();
-            }
+            if (confirm("¿Borrar?")) { await _supabase.storage.from(BUCKET).remove([n]); cargar(); }
         }
 
         function filtrar() {
@@ -256,10 +203,8 @@
             renderizar(res);
         }
 
-        checkSystemStatus();
-        cargar();
-        setInterval(checkSystemStatus, 5000);
-        setInterval(cargar, 30000);
+        checkSystemStatus(); cargar();
+        setInterval(checkSystemStatus, 5000); setInterval(cargar, 30000);
     </script>
 </body>
 </html>
