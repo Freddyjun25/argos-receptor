@@ -10,7 +10,7 @@
         :root {
             --azul-argos: #003366;
             --azul-claro: #004a94;
-            --fondo-login: #0f172a; /* Azul muy oscuro casi negro */
+            --fondo-login: #0f172a;
             --texto-secundario: #94a3b8;
         }
 
@@ -45,14 +45,23 @@
             color: var(--azul-argos); margin-bottom: 8px; text-transform: uppercase;
         }
 
-        .input-wrapper { position: relative; }
-        .input-wrapper i {
-            position: absolute; left: 12px; top: 50%;
-            transform: translateY(-50%); color: var(--texto-secundario);
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        
+        /* Icono de la izquierda */
+        .input-wrapper > i:first-child {
+            position: absolute; left: 12px; color: var(--texto-secundario);
         }
 
+        /* El ojito a la derecha */
+        .toggle-password {
+            position: absolute; right: 12px;
+            cursor: pointer; color: var(--texto-secundario);
+            transition: color 0.2s;
+        }
+        .toggle-password:hover { color: var(--azul-argos); }
+
         input {
-            width: 100%; padding: 12px 12px 12px 40px;
+            width: 100%; padding: 12px 40px 12px 40px; /* Padding a ambos lados para los iconos */
             border: 1px solid #e2e8f0; border-radius: 6px;
             font-size: 1rem; color: var(--azul-argos);
             box-sizing: border-box; transition: 0.3s;
@@ -100,6 +109,7 @@
             <div class="input-wrapper">
                 <i class="fas fa-lock"></i>
                 <input type="password" id="password" placeholder="••••••••">
+                <i class="fas fa-eye toggle-password" id="eyeIcon" onclick="togglePass()"></i>
             </div>
         </div>
 
@@ -114,6 +124,22 @@
         const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
         const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk";
         const _supabase = supabase.createClient(URL_SB, KEY_SB);
+
+        // FUNCIÓN PARA VER/OCULTAR CONTRASEÑA
+        function togglePass() {
+            const passInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passInput.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        }
 
         async function login() {
             const email = document.getElementById('email').value;
