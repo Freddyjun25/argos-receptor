@@ -16,35 +16,40 @@ const supabase = createClient(
     { auth: { persistSession: false } }
 );
 
-// --- CONFIGURACIÓN DE RUTAS Y SEGURIDAD ---
+// --- VARIABLE GLOBAL TEMPORAL ---
+let ultimaIpEsp32 = "No reportada";
+let ultimaActividad = Date.now();
 
-// 1. Servir archivos estáticos pero BLOQUEAR el acceso directo a los HTML
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
-// 2. Ruta Raíz: Solo sirve el Login
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// 3. Ruta Dashboard: Ahora apunta al archivo con el diseño blanco
 app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
-// 4. Limpieza de URLs viejas: Redirigir /index al login
-app.get(['/index', '/index.html'], (req, res) => {
-    res.redirect('/');
-});
-
 // --- RECEPCIÓN DE VIDEO (ESP32) ---
+// Optimizamos para capturar la IP del remitente automáticamente
 app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50mb' }), async (req, res) => {
     console.log("📥 [SISTEMA] Recibiendo video...");
+    
+    // Detectar IP automáticamente si no viene por query
+    const ipRemitente = req.query.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    ultimaIpEsp32 = ipRemitente.replace('::ffff:', ''); 
+    ultimaActividad = Date.now();
+
     const id = Date.now();
     const aviPath = `/tmp/in_${id}.avi`;
     const mp4Path = `/tmp/out_${id}.mp4`;
 
+    // Nombre de archivo con IP integrada para que el dashboard la lea
+    const nombreFinal = `evidencia_${id}_${ultimaIpEsp32.replace(/\./g, '-')}`;
+
     try {
         fs.writeFileSync(aviPath, req.body);
+        
         ffmpeg(aviPath)
             .output(mp4Path)
             .videoCodec('libx264')
@@ -53,7 +58,7 @@ app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50
                 console.error("⚠️ FFmpeg falló, activando rescate AVI...");
                 try {
                     const originalBuffer = fs.readFileSync(aviPath);
-                    await supabase.storage.from('videos-receptor').upload(`evidencia_${id}.avi`, originalBuffer, {
+                    await supabase.storage.from('videos-receptor').upload(`${nombreFinal}.avi`, originalBuffer, {
                         contentType: 'video/x-msvideo',
                         upsert: true
                     });
@@ -64,7 +69,7 @@ app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50
             .on('end', async () => {
                 try {
                     const mp4Buffer = fs.readFileSync(mp4Path);
-                    await supabase.storage.from('videos-receptor').upload(`camara_${id}.mp4`, mp4Buffer, {
+                    await supabase.storage.from('videos-receptor').upload(`${nombreFinal}.mp4`, mp4Buffer, {
                         contentType: 'video/mp4',
                         upsert: true
                     });
@@ -80,50 +85,42 @@ app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50
 });
 
 // --- GESTIÓN DE IP ---
-let ultimaIpEsp32 = "No reportada";
-
 app.get('/log_ip', (req, res) => {
-    const ip = req.query.ip;
+    const ip = req.query.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     if (ip) {
-        ultimaIpEsp32 = ip;
-        console.log(`📡 [DISPOSITIVO] Nueva IP recibida de ARGOS CORE: ${ip}`);
+        ultimaIpEsp32 = ip.replace('::ffff:', '');
+        ultimaActividad = Date.now();
+        console.log(`📡 [DISPOSITIVO] IP Actualizada: ${ultimaIpEsp32}`);
         res.status(200).send("IP_REGISTRADA");
     } else { res.status(400).send("FALTA_IP"); }
 });
 
+// Esta es la ruta que consultará tu Dashboard
 app.get('/get_esp_ip', (req, res) => {
-    res.json({ ip: ultimaIpEsp32 });
+    const haceCuanto = (Date.now() - ultimaActividad) / 1000 / 60;
+    if (haceCuanto > 10) { // Si no hay señales en 10 min, está offline
+        res.json({ ip: "OFFLINE", status: "offline" });
+    } else {
+        res.json({ ip: ultimaIpEsp32, status: "online" });
+    }
 });
-// --- NUEVA RUTA PARA LISTAR VIDEOS DESDE SUPABASE ---
-app.get('/api/lista-videos', async (req, res) => {
-    const { data, error } = await supabase
-        .storage
-        .from('videos-receptor')
-        .list('', {
-            limit: 20,
-            offset: 0,
-            sortBy: { column: 'created_at', order: 'desc' },
-        });
 
+app.get('/api/lista-videos', async (req, res) => {
+    const { data, error } = await supabase.storage.from('videos-receptor').list('', {
+        limit: 50,
+        sortBy: { column: 'created_at', order: 'desc' },
+    });
     if (error) return res.status(500).json({ error: error.message });
     
-    // Generar URLs públicas para cada video
     const videosConUrl = data.map(file => {
-        const { data: urlData } = supabase.storage
-            .from('videos-receptor')
-            .getPublicUrl(file.name);
+        const { data: urlData } = supabase.storage.from('videos-receptor').getPublicUrl(file.name);
         return { name: file.name, url: urlData.publicUrl, created: file.created_at };
     });
-
     res.json(videosConUrl);
 });
-// --- 🛡️ EL CANDADO FINAL ---
-app.get('*', (req, res) => {
-    res.redirect('/');
-});
+
+app.get('*', (req, res) => { res.redirect('/'); });
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 SERVIDOR ARGOS UNIFICADO`);
-    console.log(`🔗 Acceso: / (Login)`);
-    console.log(`🔗 Panel: /dashboard`);
 });
