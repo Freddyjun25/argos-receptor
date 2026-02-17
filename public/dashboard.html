@@ -151,18 +151,18 @@
 
         async function cargar() {
             try {
-                const { data, error } = await _supabase.storage
-                    .from(BUCKET_NAME)
-                    .list('videos', { limit: 100, sortBy: { column: 'name', order: 'desc' } });
+                onst { data, error } = await _supabase.storage
+                .from(videos-receptor)
+                .list('', { limit: 100, sortBy: { column: 'name', order: 'desc' } }); // Cambiado 'videos' por ''
 
                 if (error) throw error;
 
                 todosLosVideos = (data || [])
-                    .filter(f => f.name.endsWith('.avi'))
+                    .filter(f => f.name.endsWith('.avi') || f.name.endsWith('.mp4'))
                     .map(file => {
                         const { data: urlData } = _supabase.storage
-                            .from(BUCKET_NAME)
-                            .getPublicUrl(`videos/${file.name}`);
+                        .from(BUCKET_NAME)
+                        .getPublicUrl(`${file.name}`); // Quitamos 'videos/'
                         
                         // Parsear nombre: 16022026_072717.avi
                         const partes = file.name.replace('.avi', '').split('_');
@@ -271,3 +271,4 @@
     </script>
 </body>
 </html>
+
