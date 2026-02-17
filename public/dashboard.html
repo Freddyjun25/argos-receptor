@@ -14,9 +14,7 @@
             --texto: #1e293b;
             --verde-tag: #10b981;
         }
-        
         body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; color: var(--texto); }
-
         header {
             background: var(--azul-argos);
             color: white; padding: 25px 20px; text-align: center;
@@ -24,51 +22,35 @@
         }
         header h1 { margin: 0; font-size: 1.8rem; letter-spacing: 2px; font-weight: 800; text-transform: uppercase; }
         header p { margin: 5px 0 0; font-size: 0.8rem; opacity: 0.8; text-transform: uppercase; }
-
-        /* INDICADOR DE IP / OFFLINE EN EL ENCABEZADO */
-        #ip-indicator {
-            margin-top: 15px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            letter-spacing: 1px;
-        }
-
+        #ip-indicator { margin-top: 15px; font-weight: 700; font-size: 0.9rem; letter-spacing: 1px; }
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-
         .toolbar {
             background: white; border-radius: 10px; padding: 15px;
             display: flex; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             margin-bottom: 25px; align-items: center;
         }
-        
         .btn-analisis {
             background: var(--azul-argos); color: white; border: none;
             padding: 10px 20px; border-radius: 6px; font-weight: 600;
             font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 8px;
         }
-
-        .search-container { flex: 1; position: relative; }
+        .search-container { flex: 1; }
         .search-container input {
             width: 100%; padding: 10px 15px; border-radius: 6px;
             border: 1px solid #e2e8f0; outline: none;
         }
-
         .date-group-header {
             color: var(--azul-argos); border-left: 5px solid var(--azul-claro);
             padding-left: 15px; margin: 40px 0 20px; font-size: 1.1rem;
             font-weight: 800; text-transform: uppercase;
         }
-
         .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-        
         .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eef2f7; }
-        
         .card-visual { 
             height: 150px; background: #f8fafc; display: flex; flex-direction: column; 
             align-items: center; justify-content: center; color: #94a3b8;
         }
         .card-visual i { font-size: 3rem; margin-bottom: 8px; }
-
         .card-info { padding: 18px; }
         .card-tag { 
             display: inline-block; background: #ecfdf5; color: var(--verde-tag); 
@@ -76,7 +58,6 @@
             font-weight: 800; margin-bottom: 10px; text-transform: uppercase; 
         }
         .card-title { font-size: 0.95rem; margin: 0 0 15px; color: var(--azul-argos); font-weight: 700; }
-
         .card-footer { display: flex; gap: 8px; }
         .btn-download { 
             background: var(--azul-argos); color: white; text-decoration: none; 
@@ -84,7 +65,6 @@
             display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1;
         }
         .btn-delete { background: #fff; color: #ef4444; border: 1px solid #fee2e2; padding: 10px; border-radius: 6px; cursor: pointer; }
-
         .status-online { color: #10b981; }
         .status-offline { color: #ff4444; }
     </style>
@@ -103,7 +83,7 @@
         <div class="toolbar">
             <button class="btn-analisis"><i class="fas fa-chart-line"></i> ANÁLISIS DE DATOS</button>
             <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Buscar evidencia por fecha u hora..." onkeyup="filtrar()">
+                <input type="text" id="searchInput" placeholder="Buscar evidencia..." onkeyup="filtrar()">
             </div>
             <input type="date" id="dateFilter" onchange="filtrar()" style="padding:9px; border-radius:6px; border:1px solid #e2e8f0;">
         </div>
@@ -113,6 +93,7 @@
     </div>
 
     <script>
+        // Configuración de Supabase
         const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
         const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk";
         const BUCKET = "videos-receptor";
@@ -120,87 +101,49 @@
         const _supabase = supabase.createClient(URL_SB, KEY_SB);
         let todosLosVideos = [];
 
-        // 1. FUNCIÓN PARA VERIFICAR LA IP EN EL SERVIDOR
+        // 1. REVISAR IP DEL ESP32
         async function checkSystemStatus() {
             try {
                 const response = await fetch('/get_esp_ip');
                 const data = await response.json();
                 const indicator = document.getElementById('ip-indicator');
-
                 if (data.status === "online") {
                     indicator.innerHTML = `<span class="status-online"><i class="fas fa-network-wired"></i> IP: ${data.ip}</span>`;
                 } else {
                     indicator.innerHTML = `<span class="status-offline"><i class="fas fa-power-off"></i> OFFLINE</span>`;
                 }
-            } catch (err) {
-                console.error("Error consultando IP");
-            }
+            } catch (err) { console.error("Error IP"); }
         }
 
-        // 2. CARGAR VIDEOS DESDE SUPABASE
+        // 2. CARGAR VIDEOS DESDE EL SERVIDOR
         async function cargar() {
             try {
-                const { data, error } = await _supabase.storage.from(BUCKET).list('', {
-                    limit: 100, sortBy: { column: 'name', order
-        <script>
-        const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
-        const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk";
-        const BUCKET = "videos-receptor";
-
-        const _supabase = supabase.createClient(URL_SB, KEY_SB);
-        let todosLosVideos = [];
-
-        // 1. VERIFICAR ESTADO DEL ESP32
-        async function checkSystemStatus() {
-            try {
-                const response = await fetch('/get_esp_ip');
-                const data = await response.json();
-                const indicator = document.getElementById('ip-indicator');
-
-                if (data.status === "online") {
-                    indicator.innerHTML = `<span class="status-online"><i class="fas fa-network-wired"></i> IP: ${data.ip}</span>`;
-                } else {
-                    indicator.innerHTML = `<span class="status-offline"><i class="fas fa-power-off"></i> OFFLINE</span>`;
-                }
-            } catch (err) {
-                console.error("Error consultando IP");
-            }
-        }
-
-        // 2. CARGAR VIDEOS DESDE LA API DEL SERVIDOR
-        async function cargar() {
-            try {
-                // Usamos la ruta del servidor para obtener la lista procesada
                 const response = await fetch('/api/lista-videos');
                 const data = await response.json();
-
                 if (data.error) throw new Error(data.error);
-
-                todosLosVideos = data; 
+                todosLosVideos = data;
                 renderizar(todosLosVideos);
-            } catch (err) { 
-                console.error("Error en carga:", err); 
+            } catch (err) {
+                console.error("Error carga:", err);
                 document.getElementById('count-summary').innerText = "ERROR DE CONEXIÓN";
             }
         }
 
-        // 3. GENERAR LAS TARJETAS EN PANTALLA
+        // 3. MOSTRAR EN PANTALLA
         function renderizar(videos) {
             const container = document.getElementById('main-content');
             container.innerHTML = '';
             
             if (videos.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:50px; color:#64748b;">No hay evidencias registradas.</div>';
+                container.innerHTML = '<div style="text-align:center; padding:50px;">No hay evidencias.</div>';
                 return;
             }
 
-            document.getElementById('count-summary').innerText = `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS ENCONTRADAS`;
+            document.getElementById('count-summary').innerText = `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS`;
 
-            // Agrupar por fechas
             const grupos = {};
             videos.forEach(v => {
-                const fechaCrea = new Date(v.created);
-                const dia = fechaCrea.toLocaleDateString('es-ES', { 
+                const dia = new Date(v.created).toLocaleDateString('es-ES', { 
                     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
                 });
                 if (!grupos[dia]) grupos[dia] = [];
@@ -208,26 +151,17 @@
             });
 
             for (const [dia, vids] of Object.entries(grupos)) {
-                let html = `<div class="date-group-header"> <i class="fas fa-calendar-day"></i> ${dia.toUpperCase()}</div><div class="video-grid">`;
-                
+                let html = `<div class="date-group-header">${dia.toUpperCase()}</div><div class="video-grid">`;
                 vids.forEach(file => {
-                    const horaFormato = new Date(file.created).toLocaleString('es-ES', {
-                        hour: '2-digit', minute: '2-digit', hour12: true
-                    });
-
+                    const hora = new Date(file.created).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true });
                     html += `
                         <div class="card">
-                            <div class="card-visual">
-                                <i class="fas fa-file-video"></i>
-                                <span style="font-size:0.65rem; font-weight:800;">FORMATO AVI (EVIDENCIA)</span>
-                            </div>
+                            <div class="card-visual"><i class="fas fa-file-video"></i><span>AVI</span></div>
                             <div class="card-info">
                                 <div class="card-tag">REGISTRO SEGURO</div>
-                                <h4 class="card-title">${horaFormato}</h4>
+                                <h4 class="card-title">${hora}</h4>
                                 <div class="card-footer">
-                                    <a href="${file.url}" download target="_blank" class="btn-download">
-                                        <i class="fas fa-download"></i> DESCARGAR
-                                    </a>
+                                    <a href="${file.url}" download target="_blank" class="btn-download"><i class="fas fa-download"></i></a>
                                     <button onclick="eliminar('${file.name}')" class="btn-delete"><i class="fas fa-trash-alt"></i></button>
                                 </div>
                             </div>
@@ -237,34 +171,27 @@
             }
         }
 
-        // 4. ELIMINAR ARCHIVO
-        async function eliminar(nombreArchivo) {
-            if (confirm("¿Desea eliminar esta evidencia de forma permanente?")) {
-                const { error } = await _supabase.storage.from(BUCKET).remove([nombreArchivo]);
-                if (error) alert("Error al eliminar");
-                else cargar();
+        // 4. ELIMINAR
+        async function eliminar(n) {
+            if (confirm("¿Borrar evidencia?")) {
+                const { error } = await _supabase.storage.from(BUCKET).remove([n]);
+                if (!error) cargar();
             }
         }
 
-        // 5. FILTRADO
+        // 5. FILTRAR
         function filtrar() {
-            const busqueda = document.getElementById('searchInput').value.toLowerCase();
-            const fechaFiltro = document.getElementById('dateFilter').value;
-
-            const filtrados = todosLosVideos.filter(v => {
-                const coincideNombre = v.name.toLowerCase().includes(busqueda);
-                const coincideFecha = !fechaFiltro || v.created.startsWith(fechaFiltro);
-                return coincideNombre && coincideFecha;
-            });
-            renderizar(filtrados);
+            const b = document.getElementById('searchInput').value.toLowerCase();
+            const f = document.getElementById('dateFilter').value;
+            const res = todosLosVideos.filter(v => v.name.toLowerCase().includes(b) && (!f || v.created.startsWith(f)));
+            renderizar(res);
         }
 
-        // INICIO AUTOMÁTICO
+        // INICIO
         checkSystemStatus();
         cargar();
-        setInterval(checkSystemStatus, 10000); // Actualiza IP cada 10s
-        setInterval(cargar, 30000); // Actualiza videos cada 30s
+        setInterval(checkSystemStatus, 10000);
+        setInterval(cargar, 30000);
     </script>
 </body>
 </html>
-
