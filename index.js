@@ -94,7 +94,29 @@ app.get('/log_ip', (req, res) => {
 app.get('/get_esp_ip', (req, res) => {
     res.json({ ip: ultimaIpEsp32 });
 });
+// --- NUEVA RUTA PARA LISTAR VIDEOS DESDE SUPABASE ---
+app.get('/api/lista-videos', async (req, res) => {
+    const { data, error } = await supabase
+        .storage
+        .from('videos-receptor')
+        .list('', {
+            limit: 20,
+            offset: 0,
+            sortBy: { column: 'created_at', order: 'desc' },
+        });
 
+    if (error) return res.status(500).json({ error: error.message });
+    
+    // Generar URLs públicas para cada video
+    const videosConUrl = data.map(file => {
+        const { data: urlData } = supabase.storage
+            .from('videos-receptor')
+            .getPublicUrl(file.name);
+        return { name: file.name, url: urlData.publicUrl, created: file.created_at };
+    });
+
+    res.json(videosConUrl);
+});
 // --- 🛡️ EL CANDADO FINAL ---
 app.get('*', (req, res) => {
     res.redirect('/');
