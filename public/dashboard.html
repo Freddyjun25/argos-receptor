@@ -1,3 +1,7 @@
+const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
+const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk"; // Tu clave anon
+const BUCKET_NAME = "videos-receptor"; // ¡Asegúrate que sea este nombre exacto!
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -19,7 +23,6 @@
         
         body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; color: var(--texto); }
 
-        /* HEADER INSTITUCIONAL */
         header {
             background: linear-gradient(135deg, var(--azul-argos) 0%, var(--azul-claro) 100%);
             color: white; padding: 25px 30px; text-align: center;
@@ -34,78 +37,36 @@
             padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;
             text-decoration: none; font-size: 0.8rem;
         }
-        .btn-logout:hover { background: rgba(255, 255, 255, 0.25); }
 
-        /* TOOLBAR */
         .toolbar {
             max-width: 1200px; margin: 25px auto; padding: 15px 25px;
             background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             display: flex; flex-wrap: wrap; gap: 20px; align-items: center;
         }
-        .btn-stats-toggle {
-            background: var(--azul-argos); color: white; border: none; padding: 12px 20px;
-            border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 10px;
-        }
 
-        /* STATS PANEL */
-        #statsPanel {
-            max-width: 1200px; margin: 0 auto 20px; display: none;
-            animation: fadeIn 0.4s ease;
-        }
+        #statsPanel { max-width: 1200px; margin: 0 auto 20px; display: none; animation: fadeIn 0.4s ease; }
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
         .stat-card {
             background: white; padding: 20px; border-radius: 12px; text-align: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-bottom: 4px solid var(--azul-claro);
         }
-        .stat-card h3 { margin: 0; font-size: 0.75rem; color: #64748b; text-transform: uppercase; }
-        .stat-card p { margin: 10px 0 0; font-size: 1.8rem; font-weight: bold; color: var(--azul-argos); }
 
-        /* CONTENIDO PRINCIPAL */
         .container { max-width: 1200px; margin: 0 auto 40px; padding: 0 20px; }
         .status-msg { color: #64748b; font-size: 0.9rem; margin-bottom: 20px; font-weight: 500; text-transform: uppercase; }
-        
-        .date-header { 
-            color: var(--azul-argos); border-left: 4px solid var(--azul-claro); 
-            padding-left: 15px; margin: 40px 0 20px; font-size: 1.1rem; font-weight: 700;
-        }
-        
+        .date-header { color: var(--azul-argos); border-left: 4px solid var(--azul-claro); padding-left: 15px; margin: 40px 0 20px; font-size: 1.1rem; font-weight: 700; }
         .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; }
         
-        /* TARJETAS IGUALES A LA IMAGEN */
-        .card {
-            background: white; border-radius: 15px; overflow: hidden; 
-            border: 1px solid #eef2f7; transition: 0.3s;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-        }
+        .card { background: white; border-radius: 15px; overflow: hidden; border: 1px solid #eef2f7; transition: 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .card:hover { transform: translateY(-5px); box-shadow: 0 12px 25px rgba(0,0,0,0.08); }
-
-        .card-visual {
-            height: 160px; background: #f8fafc; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; position: relative;
-        }
+        .card-visual { height: 160px; background: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .card-visual i { color: #94a3b8; font-size: 3rem; }
-        .card-visual span { font-size: 10px; color: #94a3b8; margin-top: 10px; font-weight: 600; }
-
         .card-info { padding: 20px; }
-        .card-tag { 
-            display: inline-flex; align-items: center; gap: 5px; 
-            font-size: 9px; font-weight: 800; color: #10b981; 
-            background: #f0fdf4; padding: 5px 10px; border-radius: 5px; margin-bottom: 12px;
-            text-transform: uppercase;
-        }
+        .card-tag { display: inline-flex; background: #f0fdf4; color: #10b981; padding: 5px 10px; border-radius: 5px; font-size: 9px; font-weight: 800; margin-bottom: 12px; }
         .card-title { font-size: 1rem; margin: 0 0 15px; color: var(--azul-argos); font-weight: 700; }
 
         .card-actions { display: flex; gap: 10px; }
-        .btn-download {
-            flex: 1; background: var(--azul-argos); color: white; text-decoration: none;
-            text-align: center; padding: 12px; border-radius: 8px; font-size: 0.75rem;
-            font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .btn-delete {
-            background: #fff; color: #ef4444; border: 1px solid #fee2e2;
-            padding: 10px 14px; border-radius: 8px; cursor: pointer; transition: 0.2s;
-        }
-        .btn-delete:hover { background: #fee2e2; }
+        .btn-download { flex: 1; background: var(--azul-argos); color: white; text-decoration: none; text-align: center; padding: 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-delete { background: #fff; color: #ef4444; border: 1px solid #fee2e2; padding: 10px 14px; border-radius: 8px; cursor: pointer; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -124,7 +85,7 @@
             <i class="fas fa-chart-line"></i> ANÁLISIS DE DATOS
         </button>
         <input type="text" id="searchInput" placeholder="Buscar video..." onkeyup="filtrar()" style="flex: 1; padding:12px; border-radius:8px; border:1px solid #e2e8f0; outline: none;">
-        <input type="date" id="dateFilter" onchange="filtrar()" style="padding:11px; border-radius:8px; border:1px solid #e2e8f0; outline: none; color: #64748b;">
+        <input type="date" id="dateFilter" onchange="filtrar()" style="padding:11px; border-radius:8px; border:1px solid #e2e8f0; outline: none;">
     </div>
 
     <div id="statsPanel">
@@ -141,7 +102,6 @@
     </div>
 
     <script>
-        // Mismos credenciales que ya funcionan
         const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
         const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk";
         const BUCKET_NAME = "videos-receptor";
@@ -150,72 +110,54 @@
         let todosLosVideos = [];
 
         async function cargar() {
-    try {
-        // 1. Usamos la variable BUCKET_NAME y corregimos 'const'
-        const { data, error } = await _supabase.storage
-            .from(BUCKET_NAME) 
-            .list('', { limit: 100, sortBy: { column: 'name', order: 'desc' } });
-
-        if (error) throw error;
-
-        todosLosVideos = (data || [])
-            .filter(f => f.name.endsWith('.avi') || f.name.endsWith('.mp4'))
-            .map(file => {
-                const { data: urlData } = _supabase.storage
+            const msgElement = document.getElementById('msg');
+            try {
+                const { data, error } = await _supabase.storage
                     .from(BUCKET_NAME)
-                    .getPublicUrl(file.name);
-                
-                // Parsear nombre: 16022026_072717.avi
-                const partes = file.name.replace('.avi', '').replace('.mp4', '').split('_');
-                let formateado = file.name;
+                    .list('', { limit: 100, sortBy: { column: 'name', order: 'desc' } });
 
-                if (partes.length === 2) {
-                    const d = partes[0]; 
-                    const t = partes[1];
-                    const fecha = `${d.substring(0,2)}/${d.substring(2,4)}/${d.substring(4,8)}`;
-                    let h = parseInt(t.substring(0,2));
-                    const m = t.substring(2,4);
-                    const s = t.substring(4,6);
-                    const ampm = h >= 12 ? 'PM' : 'AM';
-                    h = h % 12 || 12;
-                    formateado = `${fecha} ${h}:${m}:${s} ${ampm}`;
-                }
-                
-                return {
-                    nombre_archivo: file.name,
-                    nombre_visible: formateado,
-                    fecha_creacion: file.created_at,
-                    url_video: urlData.publicUrl
-                };
-            });
+                if (error) throw error;
 
-        renderizar(todosLosVideos); // ¡No olvides esta línea para que se dibujen!
-        
-        // Actualizar numeritos de arriba
-        document.getElementById('stat-total').innerText = todosLosVideos.length;
-        const hoy = new Date().toISOString().split('T')[0];
-        document.getElementById('stat-hoy').innerText = todosLosVideos.filter(v => v.fecha_creacion.startsWith(hoy)).length;
+                todosLosVideos = (data || [])
+                    .filter(f => f.name.toLowerCase().endsWith('.avi') || f.name.toLowerCase().endsWith('.mp4'))
+                    .map(file => {
+                        const { data: urlData } = _supabase.storage.from(BUCKET_NAME).getPublicUrl(file.name);
+                        
+                        // Parsear fecha del nombre del archivo
+                        const nombreLimpio = file.name.replace('.avi', '').replace('.mp4', '');
+                        const partes = nombreLimpio.split('_');
+                        let formateado = file.name;
 
-    } catch (err) {
-        console.error("Error cargando videos:", err);
-        document.getElementById('msg').innerText = "ERROR: " + err.message;
-    }
-}
+                        if (partes.length === 2) {
+                            const d = partes[0]; const t = partes[1];
+                            const fecha = `${d.substring(0,2)}/${d.substring(2,4)}/${d.substring(4,8)}`;
+                            let h = parseInt(t.substring(0,2));
+                            const ampm = h >= 12 ? 'PM' : 'AM';
+                            h = h % 12 || 12;
+                            formateado = `${fecha} ${h}:${t.substring(2,4)} ${ampm}`;
+                        }
+                        
+                        return {
+                            nombre_archivo: file.name,
+                            nombre_visible: formateado,
+                            fecha_creacion: file.created_at,
+                            url_video: urlData.publicUrl
+                        };
+                    });
 
                 renderizar(todosLosVideos);
-                document.getElementById('stat-total').innerText = todosLosVideos.length;
-                const hoy = new Date().toISOString().split('T')[0];
-                document.getElementById('stat-hoy').innerText = todosLosVideos.filter(v => v.fecha_creacion.startsWith(hoy)).length;
+                actualizarEstadisticas();
 
             } catch (err) {
-                document.getElementById('msg').innerText = "ERROR: " + err.message;
+                console.error(err);
+                msgElement.innerText = "ERROR: " + err.message;
             }
         }
 
         function renderizar(videos) {
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = '';
-            document.getElementById('msg').innerText = `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS DISPONIBLES`;
+            document.getElementById('msg').innerText = `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS`;
 
             const grupos = {};
             videos.forEach(item => {
@@ -235,13 +177,13 @@
                         <div class="card">
                             <div class="card-visual">
                                 <i class="fas fa-file-video"></i>
-                                <span>Formato AVI (ESP32 Raw)</span>
+                                <span>${item.nombre_archivo.endsWith('.mp4') ? 'Formato MP4' : 'Formato AVI'}</span>
                             </div>
                             <div class="card-info">
                                 <div class="card-tag">Registro Seguro</div>
                                 <h4 class="card-title">${item.nombre_visible}</h4>
                                 <div class="card-actions">
-                                    <a href="${item.url_video}" download="${item.nombre_archivo}" target="_blank" class="btn-download">
+                                    <a href="${item.url_video}" download target="_blank" class="btn-download">
                                         <i class="fas fa-download"></i> DESCARGAR
                                     </a>
                                     <button onclick="eliminar('${item.nombre_archivo}')" class="btn-delete">
@@ -255,6 +197,12 @@
             }
         }
 
+        function actualizarEstadisticas() {
+            document.getElementById('stat-total').innerText = todosLosVideos.length;
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('stat-hoy').innerText = todosLosVideos.filter(v => v.fecha_creacion.startsWith(hoy)).length;
+        }
+
         function filtrar() {
             const bus = document.getElementById('searchInput').value.toLowerCase();
             const fec = document.getElementById('dateFilter').value;
@@ -266,7 +214,7 @@
 
         async function eliminar(n) {
             if (confirm("¿Eliminar evidencia?")) {
-                await _supabase.storage.from(BUCKET_NAME).remove([`videos/${n}`]);
+                await _supabase.storage.from(BUCKET_NAME).remove([n]);
                 cargar();
             }
         }
@@ -280,10 +228,9 @@
             if(confirm("¿Cerrar sesión?")) window.location.href = "/";
         }
 
+        // Iniciar
         cargar();
         setInterval(cargar, 30000);
     </script>
 </body>
 </html>
-
-
