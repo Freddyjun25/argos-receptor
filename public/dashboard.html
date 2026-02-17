@@ -150,43 +150,57 @@
         let todosLosVideos = [];
 
         async function cargar() {
-            try {
-                onst { data, error } = await _supabase.storage
-                .from(videos-receptor)
-                .list('', { limit: 100, sortBy: { column: 'name', order: 'desc' } }); // Cambiado 'videos' por ''
+    try {
+        // 1. Usamos la variable BUCKET_NAME y corregimos 'const'
+        const { data, error } = await _supabase.storage
+            .from(BUCKET_NAME) 
+            .list('', { limit: 100, sortBy: { column: 'name', order: 'desc' } });
 
-                if (error) throw error;
+        if (error) throw error;
 
-                todosLosVideos = (data || [])
-                    .filter(f => f.name.endsWith('.avi') || f.name.endsWith('.mp4'))
-                    .map(file => {
-                        const { data: urlData } = _supabase.storage
-                        .from(BUCKET_NAME)
-                        .getPublicUrl(`${file.name}`); // Quitamos 'videos/'
-                        
-                        // Parsear nombre: 16022026_072717.avi
-                        const partes = file.name.replace('.avi', '').split('_');
-                        let formateado = file.name;
+        todosLosVideos = (data || [])
+            .filter(f => f.name.endsWith('.avi') || f.name.endsWith('.mp4'))
+            .map(file => {
+                const { data: urlData } = _supabase.storage
+                    .from(BUCKET_NAME)
+                    .getPublicUrl(file.name);
+                
+                // Parsear nombre: 16022026_072717.avi
+                const partes = file.name.replace('.avi', '').replace('.mp4', '').split('_');
+                let formateado = file.name;
 
-                        if (partes.length === 2) {
-                            const d = partes[0]; 
-                            const t = partes[1];
-                            const fecha = `${d.substring(0,2)}/${d.substring(2,4)}/${d.substring(4,8)}`;
-                            let h = parseInt(t.substring(0,2));
-                            const m = t.substring(2,4);
-                            const s = t.substring(4,6);
-                            const ampm = h >= 12 ? 'PM' : 'AM';
-                            h = h % 12 || 12;
-                            formateado = `${fecha} ${h}:${m}:${s} ${ampm}`;
-                        }
-                        
-                        return {
-                            nombre_archivo: file.name,
-                            nombre_visible: formateado,
-                            fecha_creacion: file.created_at,
-                            url_video: urlData.publicUrl
-                        };
-                    });
+                if (partes.length === 2) {
+                    const d = partes[0]; 
+                    const t = partes[1];
+                    const fecha = `${d.substring(0,2)}/${d.substring(2,4)}/${d.substring(4,8)}`;
+                    let h = parseInt(t.substring(0,2));
+                    const m = t.substring(2,4);
+                    const s = t.substring(4,6);
+                    const ampm = h >= 12 ? 'PM' : 'AM';
+                    h = h % 12 || 12;
+                    formateado = `${fecha} ${h}:${m}:${s} ${ampm}`;
+                }
+                
+                return {
+                    nombre_archivo: file.name,
+                    nombre_visible: formateado,
+                    fecha_creacion: file.created_at,
+                    url_video: urlData.publicUrl
+                };
+            });
+
+        renderizar(todosLosVideos); // ¡No olvides esta línea para que se dibujen!
+        
+        // Actualizar numeritos de arriba
+        document.getElementById('stat-total').innerText = todosLosVideos.length;
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById('stat-hoy').innerText = todosLosVideos.filter(v => v.fecha_creacion.startsWith(hoy)).length;
+
+    } catch (err) {
+        console.error("Error cargando videos:", err);
+        document.getElementById('msg').innerText = "ERROR: " + err.message;
+    }
+}
 
                 renderizar(todosLosVideos);
                 document.getElementById('stat-total').innerText = todosLosVideos.length;
@@ -271,4 +285,5 @@
     </script>
 </body>
 </html>
+
 
