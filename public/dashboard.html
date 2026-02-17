@@ -24,14 +24,24 @@
         }
         header h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; text-transform: uppercase; }
         
+        /* ESTILO DEL INDICADOR COMO LINK */
         #ip-indicator { 
             margin-top: 8px; font-weight: 700; font-size: 0.85rem; 
             background: rgba(255,255,255,0.15); display: inline-block; padding: 4px 12px; border-radius: 4px;
+            transition: 0.3s; border: 1px solid rgba(255,255,255,0.1);
         }
+        #ip-indicator.active {
+            cursor: pointer;
+            background: rgba(255,255,255,0.25);
+        }
+        #ip-indicator.active:hover {
+            background: var(--verde-tag);
+            transform: translateY(-2px);
+        }
+        #ip-indicator a { color: white; text-decoration: none; display: flex; align-items: center; gap: 8px; }
 
         .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
         
-        /* TOOLBAR CON SELECTOR DE VISTA */
         .toolbar {
             background: white; border-radius: 8px; padding: 12px;
             display: flex; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -48,7 +58,6 @@
             width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #d1d5db; outline: none;
         }
 
-        /* SECCIONES Y GRIDS */
         .day-section { margin-bottom: 40px; }
         .day-header {
             background: #e2e8f0; color: var(--azul-argos); padding: 10px 15px;
@@ -56,13 +65,11 @@
             border-left: 6px solid var(--azul-claro); text-transform: uppercase;
         }
 
-        /* MODO CUADRÍCULA (POR DEFECTO) */
         .video-grid { 
             display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px;
         }
         .video-grid .card:hover { transform: scale(1.12); z-index: 50; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
 
-        /* MODO LISTA */
         .video-list { display: flex; flex-direction: column; gap: 10px; }
         .video-list .card { display: flex; flex-direction: row; height: 100px; align-items: center; }
         .video-list .card-visual { width: 150px; height: 100px; }
@@ -88,7 +95,9 @@
 
     <header>
         <h1>SISTEMA ARGOS CORE</h1>
-        <div id="ip-indicator"><i class="fas fa-sync fa-spin"></i> CONECTANDO...</div>
+        <div id="ip-indicator">
+            <i class="fas fa-sync fa-spin"></i> CONECTANDO...
+        </div>
     </header>
 
     <div class="container">
@@ -112,17 +121,27 @@
 
         const _supabase = supabase.createClient(URL_SB, KEY_SB);
         let todosLosVideos = [];
-        let vistaActual = 'grid'; // Por defecto
+        let vistaActual = 'grid';
 
         async function checkSystemStatus() {
             try {
                 const res = await fetch('/get_esp_ip');
                 const data = await res.json();
                 const indicator = document.getElementById('ip-indicator');
-                if (data.ip && data.ip !== "Buscando...") {
-                    indicator.innerHTML = `<i class="fas fa-network-wired"></i> ESP32 IP: ${data.ip}`;
+                
+                if (data.ip && data.ip !== "Buscando..." && data.ip !== "No reportada") {
+                    indicator.classList.add('active');
+                    indicator.innerHTML = `
+                        <a href="http://${data.ip}" target="_blank" title="Abrir Panel de Control del ESP32">
+                            <i class="fas fa-network-wired"></i> ESP32 IP: ${data.ip}
+                        </a>`;
+                } else {
+                    indicator.classList.remove('active');
+                    indicator.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ESP32 NO ENCONTRADO`;
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.error("Error de conexión con el servidor local");
+            }
         }
 
         function formatHora(iso) {
@@ -148,9 +167,11 @@
         }
 
         async function cargar() {
-            const response = await fetch('/api/lista-videos');
-            todosLosVideos = await response.json();
-            renderizar(todosLosVideos);
+            try {
+                const response = await fetch('/api/lista-videos');
+                todosLosVideos = await response.json();
+                renderizar(todosLosVideos);
+            } catch(e) {}
         }
 
         function renderizar(videos) {
@@ -193,7 +214,7 @@
         }
 
         async function eliminar(n) {
-            if (confirm("¿Borrar?")) { await _supabase.storage.from(BUCKET).remove([n]); cargar(); }
+            if (confirm("¿Borrar evidencia?")) { await _supabase.storage.from(BUCKET).remove([n]); cargar(); }
         }
 
         function filtrar() {
