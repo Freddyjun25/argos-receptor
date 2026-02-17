@@ -19,81 +19,64 @@
         
         header {
             background: var(--azul-argos);
-            color: white; padding: 25px 20px; text-align: center;
+            color: white; padding: 20px; text-align: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        header h1 { margin: 0; font-size: 1.8rem; letter-spacing: 2px; font-weight: 800; text-transform: uppercase; }
-        header p { margin: 5px 0 0; font-size: 0.8rem; opacity: 0.8; text-transform: uppercase; }
-        
-        /* ESTILO IP PERSISTENTE */
+        header h1 { margin: 0; font-size: 1.5rem; letter-spacing: 2px; font-weight: 800; text-transform: uppercase; }
         #ip-indicator { 
-            margin-top: 15px; 
-            font-weight: 700; 
-            font-size: 1rem; 
-            background: rgba(255,255,255,0.1);
-            display: inline-block;
-            padding: 8px 15px;
-            border-radius: 50px;
-            border: 1px solid rgba(255,255,255,0.2);
+            margin-top: 10px; font-weight: 700; font-size: 0.9rem; 
+            background: rgba(255,255,255,0.1); display: inline-block;
+            padding: 5px 15px; border-radius: 50px;
         }
 
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         
+        /* TOOLBAR MEJORADA */
         .toolbar {
-            background: white; border-radius: 10px; padding: 15px;
-            display: flex; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            margin-bottom: 25px; align-items: center;
+            background: white; border-radius: 10px; padding: 12px;
+            display: flex; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px; align-items: center;
         }
-
+        .btn-view {
+            background: var(--azul-argos); color: white; border: none;
+            padding: 10px; border-radius: 6px; cursor: pointer; width: 45px;
+        }
         .search-container { flex: 1; }
         .search-container input {
-            width: 100%; padding: 10px 15px; border-radius: 6px;
+            width: 100%; padding: 10px; border-radius: 6px;
             border: 1px solid #e2e8f0; outline: none;
         }
 
-        .date-group-header {
-            color: var(--azul-argos); border-left: 5px solid var(--azul-claro);
-            padding-left: 15px; margin: 40px 0 20px; font-size: 1.1rem;
-            font-weight: 800; text-transform: uppercase;
+        /* DISEÑO DE CUADRITOS PEQUEÑOS */
+        .video-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+            gap: 15px; 
         }
 
-        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+        /* DISEÑO DE LISTA */
+        .video-list { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
+
+        .card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eef2f7; transition: 0.2s; }
         
-        /* TARJETA CON REPRODUCTOR */
-        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid #eef2f7; transition: 0.3s; }
-        .card:hover { transform: translateY(-5px); }
+        /* Adaptación para modo lista */
+        .video-list .card { display: flex; align-items: center; height: 80px; }
+        .video-list .card-visual { width: 120px; height: 80px; }
+        .video-list .card-info { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
+        .video-list .card-footer { border: none; padding: 0; }
 
-        .card-visual { 
-            width: 100%;
-            background: #000;
-            line-height: 0;
-        }
-        video { width: 100%; height: auto; aspect-ratio: 4/3; background: #000; }
+        .card-visual video { width: 100%; height: 100%; object-fit: cover; background: #000; }
+        .card-info { padding: 12px; }
+        .card-title { font-size: 0.85rem; margin: 0; color: var(--azul-argos); font-weight: 700; }
+        .card-tag { font-size: 0.6rem; font-weight: 800; color: var(--verde-tag); text-transform: uppercase; margin-bottom: 4px; display: block;}
 
-        .card-info { padding: 18px; }
-        .card-tag { 
-            display: inline-block; background: #ecfdf5; color: var(--verde-tag); 
-            padding: 4px 10px; border-radius: 4px; font-size: 0.65rem; 
-            font-weight: 800; margin-bottom: 10px; text-transform: uppercase; 
-        }
-        .card-title { font-size: 1rem; margin: 0 0 15px; color: var(--azul-argos); font-weight: 700; }
-        
-        .card-footer { display: flex; gap: 10px; border-top: 1px solid #f1f5f9; padding-top: 15px; }
-        
-        .btn-download { 
-            background: var(--verde-tag); color: white; text-decoration: none; 
-            padding: 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 700;
-            display: flex; align-items: center; justify-content: center; gap: 8px; flex: 3;
-            transition: 0.2s;
-        }
-        .btn-download:hover { background: #059669; }
-
-        .btn-delete { 
-            background: #fff; color: var(--rojo); border: 1px solid #fee2e2; 
-            padding: 10px; border-radius: 6px; cursor: pointer; flex: 1;
-            transition: 0.2s;
-        }
-        .btn-delete:hover { background: #fef2f2; }
+        .card-footer { display: flex; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 10px; margin-top: 10px; }
+        .btn-download { background: var(--azul-argos); color: white; text-decoration: none; padding: 8px; border-radius: 5px; font-size: 0.75rem; flex: 1; text-align: center; }
+        .btn-delete { color: var(--rojo); background: none; border: none; cursor: pointer; padding: 5px; }
 
         .status-online { color: #34d399; }
         .status-offline { color: #fb7185; }
@@ -103,22 +86,22 @@
 
     <header>
         <h1>SISTEMA ARGOS CORE</h1>
-        <p>CENTRO DE INTELIGENCIA Y EVIDENCIAS</p>
         <div id="ip-indicator">
-            <i class="fas fa-circle-notch fa-spin"></i> SINCRONIZANDO...
+            <i class="fas fa-sync fa-spin"></i> BUSCANDO DISPOSITIVO...
         </div>
     </header>
 
     <div class="container">
         <div class="toolbar">
+            <button class="btn-view" onclick="cambiarVista('grid')" title="Vista Cuadros"><i class="fas fa-th"></i></button>
+            <button class="btn-view" onclick="cambiarVista('list')" title="Vista Lista"><i class="fas fa-list"></i></button>
             <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Buscar por nombre de archivo o IP..." onkeyup="filtrar()">
+                <input type="text" id="searchInput" placeholder="Buscar evidencia..." onkeyup="filtrar()">
             </div>
-            <input type="date" id="dateFilter" onchange="filtrar()" style="padding:9px; border-radius:6px; border:1px solid #e2e8f0;">
+            <input type="date" id="dateFilter" onchange="filtrar()" style="padding:8px; border-radius:6px; border:1px solid #e2e8f0;">
         </div>
 
-        <div id="count-summary" style="margin-bottom:15px; font-size:0.8rem; color:#64748b; font-weight:700; text-transform:uppercase;"></div>
-        <div id="main-content"></div>
+        <div id="main-content" class="video-grid"></div>
     </div>
 
     <script>
@@ -128,101 +111,77 @@
 
         const _supabase = supabase.createClient(URL_SB, KEY_SB);
         let todosLosVideos = [];
+        let vistaActual = 'grid';
 
-        // 1. REVISAR IP (Ajustado para tu nueva ruta persistente)
+        // 1. REVISAR IP (Aparecerá inmediato ahora)
         async function checkSystemStatus() {
             try {
                 const response = await fetch('/get_esp_ip');
                 const data = await response.json();
                 const indicator = document.getElementById('ip-indicator');
-                
-                // Si la IP existe en el servidor, se muestra siempre
-                if (data.ip && data.ip !== "No reportada" && data.ip !== "Buscando...") {
+                if (data.ip && data.ip !== "Buscando...") {
                     indicator.innerHTML = `<span class="status-online"><i class="fas fa-network-wired"></i> ESP32 IP: ${data.ip}</span>`;
-                } else {
-                    indicator.innerHTML = `<span class="status-offline"><i class="fas fa-exclamation-triangle"></i> ESP32 NO ENCONTRADO</span>`;
                 }
-            } catch (err) { console.error("Error IP"); }
+            } catch (e) {}
         }
 
-        // 2. CARGAR VIDEOS
+        // 2. FORMATEAR FECHA: DD/MM/YYYY HH:MMam/pm
+        function formatFechaArgos(isoString) {
+            const d = new Date(isoString);
+            const dia = d.getDate().toString().padStart(2, '0');
+            const mes = (d.getMonth() + 1).toString().padStart(2, '0');
+            const anio = d.getFullYear();
+            let hh = d.getHours();
+            const mm = d.getMinutes().toString().padStart(2, '0');
+            const ampm = hh >= 12 ? 'pm' : 'am';
+            hh = hh % 12 || 12;
+            return `${dia}/${mes}/${anio} ${hh}:${mm}${ampm}`;
+        }
+
+        // 3. CARGAR Y RENDERIZAR
         async function cargar() {
-            try {
-                const response = await fetch('/api/lista-videos');
-                const data = await response.json();
-                if (data.error) throw new Error(data.error);
-                todosLosVideos = data;
-                renderizar(todosLosVideos);
-            } catch (err) {
-                console.error("Error carga:", err);
-            }
+            const response = await fetch('/api/lista-videos');
+            todosLosVideos = await response.json();
+            renderizar(todosLosVideos);
         }
 
-        // 3. RENDERIZAR CON REPRODUCTOR
         function renderizar(videos) {
             const container = document.getElementById('main-content');
+            container.className = vistaActual === 'grid' ? 'video-grid' : 'video-list';
             container.innerHTML = '';
-            
-            if (videos.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:50px; color:#64748b;">SIN EVIDENCIAS REGISTRADAS</div>';
-                return;
-            }
 
-            document.getElementById('count-summary').innerText = `HISTORIAL: ${videos.length} ARCHIVOS ENCONTRADOS`;
+            videos.forEach(file => {
+                const esVideo = file.name.toLowerCase().endsWith('.mp4');
+                const fechaPretty = formatFechaArgos(file.created);
 
-            const grupos = {};
-            videos.forEach(v => {
-                const dia = new Date(v.created).toLocaleDateString('es-ES', { 
-                    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
-                });
-                if (!grupos[dia]) grupos[dia] = [];
-                grupos[dia].push(v);
+                container.innerHTML += `
+                    <div class="card">
+                        <div class="card-visual">
+                            ${esVideo ? `<video preload="metadata" muted><source src="${file.url}" type="video/mp4"></video>` : `<div style="text-align:center;color:#ccc;padding:20px"><i class="fas fa-file-video fa-2x"></i></div>`}
+                        </div>
+                        <div class="card-info">
+                            <div>
+                                <span class="card-tag">Registro Seguro</span>
+                                <h4 class="card-title">${fechaPretty}</h4>
+                            </div>
+                            <div class="card-footer">
+                                <a href="${file.url}" download target="_blank" class="btn-download"><i class="fas fa-download"></i></a>
+                                <button onclick="eliminar('${file.name}')" class="btn-delete"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        </div>
+                    </div>`;
             });
+        }
 
-            for (const [dia, vids] of Object.entries(grupos)) {
-                let html = `<div class="date-group-header">${dia.toUpperCase()}</div><div class="video-grid">`;
-                vids.forEach(file => {
-                    const hora = new Date(file.created).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true });
-                    
-                    // Detectar si es MP4 o AVI para el reproductor
-                    const esVideoCompatible = file.name.toLowerCase().endsWith('.mp4');
-
-                    html += `
-                        <div class="card">
-                            <div class="card-visual">
-                                ${esVideoCompatible ? 
-                                    `<video controls preload="metadata">
-                                        <source src="${file.url}" type="video/mp4">
-                                        Tu navegador no soporta video.
-                                     </video>` : 
-                                    `<div style="padding:40px; text-align:center; color:white;">
-                                        <i class="fas fa-file-video" style="font-size:3rem;"></i><br>
-                                        <small>FORMATO AVI (DESCARGAR PARA VER)</small>
-                                     </div>`
-                                }
-                            </div>
-                            <div class="card-info">
-                                <div class="card-tag">${esVideoCompatible ? 'VIDEO PROCESADO' : 'ARCHIVO CRUDO'}</div>
-                                <h4 class="card-title"><i class="far fa-clock"></i> ${hora}</h4>
-                                <div class="card-footer">
-                                    <a href="${file.url}" download target="_blank" class="btn-download">
-                                        <i class="fas fa-cloud-download-alt"></i> DESCARGAR
-                                    </a>
-                                    <button onclick="eliminar('${file.name}')" class="btn-delete">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>`;
-                });
-                container.innerHTML += html + `</div>`;
-            }
+        function cambiarVista(modo) {
+            vistaActual = modo;
+            renderizar(todosLosVideos);
         }
 
         async function eliminar(n) {
-            if (confirm("¿Desea eliminar esta evidencia de forma permanente?")) {
-                const { error } = await _supabase.storage.from(BUCKET).remove([n]);
-                if (!error) cargar();
+            if (confirm("¿Borrar evidencia?")) {
+                await _supabase.storage.from(BUCKET).remove([n]);
+                cargar();
             }
         }
 
@@ -233,11 +192,10 @@
             renderizar(res);
         }
 
-        // INICIALIZACIÓN
         checkSystemStatus();
         cargar();
-        setInterval(checkSystemStatus, 5000); // Check IP cada 5 seg
-        setInterval(cargar, 60000); // Refresh lista cada minuto
+        setInterval(checkSystemStatus, 5000);
+        setInterval(cargar, 30000);
     </script>
 </body>
 </html>
