@@ -1,129 +1,178 @@
-const express = require('express');
-const { createClient } = require('@supabase/supabase-js');
-const path = require('path');
-const ffmpeg = require('fluent-ffmpeg');
-const ffmpegStatic = require('ffmpeg-static');
-const fs = require('fs');
-const app = express();
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEMA ARGOS CORE</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --azul-argos: #003366;
+            --azul-claro: #004a94;
+            --verde-stats: #10b981;
+            --fondo: #f0f2f5;
+            --texto: #1e293b;
+        }
+        
+        body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; color: var(--texto); }
 
-ffmpeg.setFfmpegPath(ffmpegStatic);
+        header {
+            background: #003366;
+            color: white; padding: 25px 30px; text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative;
+        }
+        header h1 { margin: 0; font-size: 1.8rem; letter-spacing: 2px; font-weight: 700; text-transform: uppercase; }
 
-const PORT = process.env.PORT || 10000;
+        /* EL INDICADOR QUE PEDISTE */
+        #ip-display {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.9);
+            text-transform: uppercase;
+        }
 
-const supabase = createClient(
-    process.env.SUPABASE_URL || '', 
-    process.env.SUPABASE_KEY || '',
-    { auth: { persistSession: false } }
-);
+        .container { max-width: 1200px; margin: 25px auto; padding: 0 20px; }
+        
+        .toolbar {
+            background: white; border-radius: 8px; padding: 15px;
+            display: flex; gap: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
 
-// --- CONFIGURACIÓN DE RUTAS Y SEGURIDAD ---
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+        
+        .card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #eef2f7; transition: 0.3s; }
+        .card-visual { height: 160px; background: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; }
+        .card-visual i { font-size: 3rem; }
+        
+        .card-info { padding: 15px; }
+        .card-tag { display: inline-block; background: #f0fdf4; color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; margin-bottom: 10px; }
+        .card-title { font-size: 0.9rem; margin: 0 0 10px; color: var(--azul-argos); font-weight: 700; word-break: break-all; }
 
-// 1. Servir archivos estáticos pero BLOQUEAR el acceso directo a los HTML
-app.use(express.static(path.join(__dirname, 'public'), { index: false }));
+        .btn-download { 
+            background: var(--azul-argos); color: white; text-decoration: none; 
+            padding: 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 800;
+            display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1;
+        }
+        .btn-delete { background: #fff; color: #ef4444; border: 1px solid #fee2e2; padding: 10px; border-radius: 6px; cursor: pointer; }
 
-// 2. Ruta Raíz: Solo sirve el Login
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
+        .status-online { color: #10b981; }
+        .status-offline { color: #ff4444; }
+    </style>
+</head>
+<body>
 
-// 3. Ruta Dashboard: Ahora apunta al archivo con el diseño blanco
-app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
-});
+    <header>
+        <h1>SISTEMA ARGOS CORE</h1>
+        <div id="ip-display"><i class="fas fa-sync fa-spin"></i> DETECTANDO ESTADO...</div>
+    </header>
 
-// 4. Limpieza de URLs viejas: Redirigir /index al login
-app.get(['/index', '/index.html'], (req, res) => {
-    res.redirect('/');
-});
+    <div class="container">
+        <div class="toolbar">
+            <input type="text" id="searchInput" placeholder="Buscar video..." onkeyup="filtrar()" style="flex: 1; padding:10px; border-radius:6px; border:1px solid #ddd;">
+            <input type="date" id="dateFilter" onchange="filtrar()" style="padding:9px; border-radius:6px; border:1px solid #ddd;">
+        </div>
 
-// --- RECEPCIÓN DE VIDEO (ESP32) ---
-app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50mb' }), async (req, res) => {
-    console.log("📥 [SISTEMA] Recibiendo video...");
-    const id = Date.now();
-    const aviPath = `/tmp/in_${id}.avi`;
-    const mp4Path = `/tmp/out_${id}.mp4`;
+        <div id="main-content" class="video-grid"></div>
+    </div>
 
-    try {
-        fs.writeFileSync(aviPath, req.body);
-        ffmpeg(aviPath)
-            .output(mp4Path)
-            .videoCodec('libx264')
-            .addOptions(['-preset ultrafast', '-crf 28', '-pix_fmt yuv420p'])
-            .on('error', async (err) => {
-                console.error("⚠️ FFmpeg falló, activando rescate AVI...");
-                try {
-                    const originalBuffer = fs.readFileSync(aviPath);
-                    await supabase.storage.from('videos-receptor').upload(`evidencia_${id}.avi`, originalBuffer, {
-                        contentType: 'video/x-msvideo',
-                        upsert: true
-                    });
-                    res.status(200).send("OK_RESCATADO");
-                } catch (e) { res.status(500).send("ERR_FATAL"); }
-                finally { if (fs.existsSync(aviPath)) fs.unlinkSync(aviPath); }
-            })
-            .on('end', async () => {
-                try {
-                    const mp4Buffer = fs.readFileSync(mp4Path);
-                    await supabase.storage.from('videos-receptor').upload(`camara_${id}.mp4`, mp4Buffer, {
-                        contentType: 'video/mp4',
-                        upsert: true
-                    });
-                    res.status(200).send("OK_FINAL");
-                } catch (err) { res.status(500).send("ERR_STORAGE"); }
-                finally {
-                    if (fs.existsSync(aviPath)) fs.unlinkSync(aviPath);
-                    if (fs.existsSync(mp4Path)) fs.unlinkSync(mp4Path);
+    <script>
+        const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
+        const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk";
+        const BUCKET = "videos-receptor";
+
+        const _supabase = supabase.createClient(URL_SB, KEY_SB);
+        let todosLosVideos = [];
+
+        async function cargar() {
+            try {
+                const { data, error } = await _supabase.storage.from(BUCKET).list('', {
+                    limit: 100, sortBy: { column: 'name', order: 'desc' }
+                });
+
+                if (error) throw error;
+
+                todosLosVideos = data.filter(f => f.name.toLowerCase().endsWith('.avi') || f.name.toLowerCase().endsWith('.mp4'));
+
+                actualizarCabecera(todosLosVideos);
+                renderizar(todosLosVideos);
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function actualizarCabecera(videos) {
+            const display = document.getElementById('ip-display');
+            
+            if (videos.length > 0) {
+                const ultimo = videos[0]; // El más reciente
+                const fechaCarga = new Date(ultimo.created_at);
+                const ahora = new Date();
+                const diferenciaMinutos = (ahora - fechaCarga) / 1000 / 60;
+
+                // Si el último video se subió hace menos de 15 minutos, consideramos que está ONLINE
+                if (diferenciaMinutos < 15) {
+                    // Extraemos la IP del nombre del archivo (ej: evidencia_192.168.1.15.avi)
+                    const partes = ultimo.name.split('_');
+                    // Buscamos algo que parezca una IP en las partes del nombre
+                    const ip = partes.find(p => p.includes('.')) || "IP NO DETECTADA";
+                    display.innerHTML = `<span class="status-online"><i class="fas fa-network-wired"></i> IP: ${ip.replace('.avi', '').replace('.mp4', '')}</span>`;
+                } else {
+                    display.innerHTML = `<span class="status-offline"><i class="fas fa-power-off"></i> OFFLINE</span>`;
                 }
-            })
-            .run();
-    } catch (err) { res.status(500).send("ERR_SERVER"); }
-});
+            } else {
+                display.innerHTML = `<span class="status-offline"><i class="fas fa-power-off"></i> OFFLINE</span>`;
+            }
+        }
 
-// --- GESTIÓN DE IP ---
-let ultimaIpEsp32 = "No reportada";
+        function renderizar(videos) {
+            const container = document.getElementById('main-content');
+            container.innerHTML = '';
 
-app.get('/log_ip', (req, res) => {
-    const ip = req.query.ip;
-    if (ip) {
-        ultimaIpEsp32 = ip;
-        console.log(`📡 [DISPOSITIVO] Nueva IP recibida de ARGOS CORE: ${ip}`);
-        res.status(200).send("IP_REGISTRADA");
-    } else { res.status(400).send("FALTA_IP"); }
-});
+            videos.forEach(file => {
+                const { data: urlData } = _supabase.storage.from(BUCKET).getPublicUrl(file.name);
+                const card = `
+                    <div class="card">
+                        <div class="card-visual">
+                            <i class="fas fa-file-video"></i>
+                            <span style="font-size:0.7rem; font-weight:bold; margin-top:10px;">FORMATO ${file.name.split('.').pop().toUpperCase()}</span>
+                        </div>
+                        <div class="card-info">
+                            <div class="card-tag">CAPTURA SEGURA</div>
+                            <h4 class="card-title">${file.name}</h4>
+                            <div style="display:flex; gap:10px;">
+                                <a href="${urlData.publicUrl}" download target="_blank" class="btn-download">
+                                    <i class="fas fa-download"></i> DESCARGAR
+                                </a>
+                                <button onclick="eliminar('${file.name}')" class="btn-delete">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>`;
+                container.innerHTML += card;
+            });
+        }
 
-app.get('/get_esp_ip', (req, res) => {
-    res.json({ ip: ultimaIpEsp32 });
-});
-// --- NUEVA RUTA PARA LISTAR VIDEOS DESDE SUPABASE ---
-app.get('/api/lista-videos', async (req, res) => {
-    const { data, error } = await supabase
-        .storage
-        .from('videos-receptor')
-        .list('', {
-            limit: 20,
-            offset: 0,
-            sortBy: { column: 'created_at', order: 'desc' },
-        });
+        async function eliminar(n) {
+            if (confirm("¿Eliminar evidencia?")) {
+                await _supabase.storage.from(BUCKET).remove([n]);
+                cargar();
+            }
+        }
 
-    if (error) return res.status(500).json({ error: error.message });
-    
-    // Generar URLs públicas para cada video
-    const videosConUrl = data.map(file => {
-        const { data: urlData } = supabase.storage
-            .from('videos-receptor')
-            .getPublicUrl(file.name);
-        return { name: file.name, url: urlData.publicUrl, created: file.created_at };
-    });
+        function filtrar() {
+            const bus = document.getElementById('searchInput').value.toLowerCase();
+            const fil = todosLosVideos.filter(v => v.name.toLowerCase().includes(bus));
+            renderizar(fil);
+        }
 
-    res.json(videosConUrl);
-});
-// --- 🛡️ EL CANDADO FINAL ---
-app.get('*', (req, res) => {
-    res.redirect('/');
-});
-
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🚀 SERVIDOR ARGOS UNIFICADO`);
-    console.log(`🔗 Acceso: / (Login)`);
-    console.log(`🔗 Panel: /dashboard`);
-});
+        cargar();
+        setInterval(cargar, 30000); // Se actualiza cada 30 segundos
+    </script>
+</body>
+</html>
