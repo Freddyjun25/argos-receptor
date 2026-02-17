@@ -142,3 +142,129 @@
             try {
                 const { data, error } = await _supabase.storage.from(BUCKET).list('', {
                     limit: 100, sortBy: { column: 'name', order
+        <script>
+        const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
+        const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk";
+        const BUCKET = "videos-receptor";
+
+        const _supabase = supabase.createClient(URL_SB, KEY_SB);
+        let todosLosVideos = [];
+
+        // 1. VERIFICAR ESTADO DEL ESP32
+        async function checkSystemStatus() {
+            try {
+                const response = await fetch('/get_esp_ip');
+                const data = await response.json();
+                const indicator = document.getElementById('ip-indicator');
+
+                if (data.status === "online") {
+                    indicator.innerHTML = `<span class="status-online"><i class="fas fa-network-wired"></i> IP: ${data.ip}</span>`;
+                } else {
+                    indicator.innerHTML = `<span class="status-offline"><i class="fas fa-power-off"></i> OFFLINE</span>`;
+                }
+            } catch (err) {
+                console.error("Error consultando IP");
+            }
+        }
+
+        // 2. CARGAR VIDEOS DESDE LA API DEL SERVIDOR
+        async function cargar() {
+            try {
+                // Usamos la ruta del servidor para obtener la lista procesada
+                const response = await fetch('/api/lista-videos');
+                const data = await response.json();
+
+                if (data.error) throw new Error(data.error);
+
+                todosLosVideos = data; 
+                renderizar(todosLosVideos);
+            } catch (err) { 
+                console.error("Error en carga:", err); 
+                document.getElementById('count-summary').innerText = "ERROR DE CONEXIÓN";
+            }
+        }
+
+        // 3. GENERAR LAS TARJETAS EN PANTALLA
+        function renderizar(videos) {
+            const container = document.getElementById('main-content');
+            container.innerHTML = '';
+            
+            if (videos.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:50px; color:#64748b;">No hay evidencias registradas.</div>';
+                return;
+            }
+
+            document.getElementById('count-summary').innerText = `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS ENCONTRADAS`;
+
+            // Agrupar por fechas
+            const grupos = {};
+            videos.forEach(v => {
+                const fechaCrea = new Date(v.created);
+                const dia = fechaCrea.toLocaleDateString('es-ES', { 
+                    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+                });
+                if (!grupos[dia]) grupos[dia] = [];
+                grupos[dia].push(v);
+            });
+
+            for (const [dia, vids] of Object.entries(grupos)) {
+                let html = `<div class="date-group-header"> <i class="fas fa-calendar-day"></i> ${dia.toUpperCase()}</div><div class="video-grid">`;
+                
+                vids.forEach(file => {
+                    const horaFormato = new Date(file.created).toLocaleString('es-ES', {
+                        hour: '2-digit', minute: '2-digit', hour12: true
+                    });
+
+                    html += `
+                        <div class="card">
+                            <div class="card-visual">
+                                <i class="fas fa-file-video"></i>
+                                <span style="font-size:0.65rem; font-weight:800;">FORMATO AVI (EVIDENCIA)</span>
+                            </div>
+                            <div class="card-info">
+                                <div class="card-tag">REGISTRO SEGURO</div>
+                                <h4 class="card-title">${horaFormato}</h4>
+                                <div class="card-footer">
+                                    <a href="${file.url}" download target="_blank" class="btn-download">
+                                        <i class="fas fa-download"></i> DESCARGAR
+                                    </a>
+                                    <button onclick="eliminar('${file.name}')" class="btn-delete"><i class="fas fa-trash-alt"></i></button>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                container.innerHTML += html + `</div>`;
+            }
+        }
+
+        // 4. ELIMINAR ARCHIVO
+        async function eliminar(nombreArchivo) {
+            if (confirm("¿Desea eliminar esta evidencia de forma permanente?")) {
+                const { error } = await _supabase.storage.from(BUCKET).remove([nombreArchivo]);
+                if (error) alert("Error al eliminar");
+                else cargar();
+            }
+        }
+
+        // 5. FILTRADO
+        function filtrar() {
+            const busqueda = document.getElementById('searchInput').value.toLowerCase();
+            const fechaFiltro = document.getElementById('dateFilter').value;
+
+            const filtrados = todosLosVideos.filter(v => {
+                const coincideNombre = v.name.toLowerCase().includes(busqueda);
+                const coincideFecha = !fechaFiltro || v.created.startsWith(fechaFiltro);
+                return coincideNombre && coincideFecha;
+            });
+            renderizar(filtrados);
+        }
+
+        // INICIO AUTOMÁTICO
+        checkSystemStatus();
+        cargar();
+        setInterval(checkSystemStatus, 10000); // Actualiza IP cada 10s
+        setInterval(cargar, 30000); // Actualiza videos cada 30s
+    </script>
+</body>
+</html>
+
