@@ -18,21 +18,20 @@ const supabase = createClient(
 
 // --- CONFIGURACIÓN DE RUTAS Y SEGURIDAD ---
 
-// IMPORTANTE: Agregamos { index: false } para que Express NO sirva el index.html automáticamente
+// 1. Servir archivos estáticos (CSS, Imágenes, JS) pero BLOQUEAR el acceso directo a los HTML
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
-// 1. La raíz "/" ahora sirve EXCLUSIVAMENTE el login
+// 2. Ruta Raíz: Solo sirve el Login
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// 2. Ruta protegida para el Dashboard
+// 3. Ruta Dashboard: Solo accesible mediante esta URL
 app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // --- RECEPCIÓN DE VIDEO (ESP32) ---
-
 app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50mb' }), async (req, res) => {
     console.log("📥 [SISTEMA] Recibiendo video...");
     const id = Date.now();
@@ -76,7 +75,6 @@ app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50
 });
 
 // --- GESTIÓN DE IP ---
-
 let ultimaIpEsp32 = "No reportada";
 
 app.get('/log_ip', (req, res) => {
@@ -92,8 +90,15 @@ app.get('/get_esp_ip', (req, res) => {
     res.json({ ip: ultimaIpEsp32 });
 });
 
+// --- 🛡️ EL CANDADO FINAL: UNIFICACIÓN ---
+// Si alguien intenta entrar a /index, /index.html o cualquier ruta que no sea / o /dashboard
+// el servidor lo mandará de vuelta al Login automáticamente.
+app.get('*', (req, res) => {
+    res.redirect('/');
+});
+
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🚀 SERVIDOR ARGOS PROTEGIDO Y ACTIVO`);
-    console.log(`🔗 Acceso principal: /`);
-    console.log(`🔗 Panel de control: /dashboard`);
+    console.log(`\n🚀 SERVIDOR ARGOS UNIFICADO`);
+    console.log(`🔗 Acceso: / (Login)`);
+    console.log(`🔗 Panel: /dashboard`);
 });
