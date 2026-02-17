@@ -44,24 +44,26 @@
             padding-left: 15px; margin: 30px 0 15px; font-size: 1rem; text-transform: uppercase;
         }
 
-        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
         
-        .card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; transition: 0.3s; }
+        .card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; transition: 0.3s; display: flex; flex-direction: column; }
         .card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
         
-        .card-visual { 
-            height: 140px; background: #f8fafc; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; color: #94a3b8;
+        /* Contenedor del video en la tarjeta */
+        .video-container { width: 100%; height: 160px; background: #000; position: relative; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        
+        .avi-placeholder { 
+            width: 100%; height: 100%; background: #f8fafc; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; 
         }
-        .card-visual i { font-size: 2.5rem; }
-        .card-visual span { font-size: 0.7rem; margin-top: 8px; font-weight: bold; }
 
-        .card-info { padding: 15px; }
+        .card-info { padding: 15px; flex-grow: 1; }
         .card-tag { 
             display: inline-block; background: #f0fdf4; color: #10b981; 
             padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; margin-bottom: 10px; 
         }
-        .card-title { font-size: 0.95rem; margin: 0 0 15px; color: var(--azul-argos); }
+        .card-title { font-size: 0.95rem; margin: 0 0 15px; color: var(--azul-argos); height: 2.4em; overflow: hidden; }
 
         .card-actions { display: flex; gap: 8px; }
         .btn-download { 
@@ -70,7 +72,6 @@
             display: flex; align-items: center; justify-content: center; gap: 5px;
         }
         .btn-delete { background: white; color: #ef4444; border: 1px solid #fee2e2; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
-        .btn-delete:hover { background: #fee2e2; }
     </style>
 </head>
 <body>
@@ -85,7 +86,7 @@
     </div>
 
     <div class="container">
-        <div id="msg" class="status-msg">Iniciando sistema...</div>
+        <div id="msg" class="status-msg">Sincronizando evidencias...</div>
         <div id="main-content"></div>
     </div>
 
@@ -110,22 +111,19 @@
                     .map(file => {
                         const { data: urlData } = _supabase.storage.from(BUCKET_NAME).getPublicUrl(file.name);
                         
-                        // LÓGICA DE NOMBRE MEJORADA
                         let formateado = file.name;
                         const nombreSinExt = file.name.split('.')[0];
                         const partes = nombreSinExt.split('_');
 
                         if (partes.length >= 2) {
-                            const d = partes[0]; // Ejemplo: 16022026
-                            const t = partes[1]; // Ejemplo: 173045
-                            
+                            const d = partes[0]; 
+                            const t = partes[1];
                             if(d.length === 8 && t.length >= 4) {
                                 const fechaStr = `${d.substring(0,2)}/${d.substring(2,4)}/${d.substring(4,8)}`;
                                 let h = parseInt(t.substring(0,2));
-                                const m = t.substring(2,4);
                                 const ampm = h >= 12 ? 'PM' : 'AM';
                                 h = h % 12 || 12;
-                                formateado = `${fechaStr} - ${h}:${m} ${ampm}`;
+                                formateado = `${fechaStr} - ${h}:${t.substring(2,4)} ${ampm}`;
                             }
                         }
                         
@@ -140,14 +138,14 @@
                 renderizar(todosLosVideos);
 
             } catch (err) {
-                document.getElementById('msg').innerText = "ERROR DE CARGA: " + err.message;
+                document.getElementById('msg').innerText = "ERROR: " + err.message;
             }
         }
 
         function renderizar(videos) {
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = '';
-            document.getElementById('msg').innerText = `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS ENCONTRADAS`;
+            document.getElementById('msg').innerText = `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS`;
 
             const grupos = {};
             videos.forEach(item => {
@@ -159,12 +157,21 @@
             for (const [fecha, vids] of Object.entries(grupos)) {
                 let section = `<div class="date-section"><h4 class="date-header"><i class="fas fa-calendar-day"></i> ${fecha}</h4><div class="video-grid">`;
                 vids.forEach(item => {
-                    const ext = item.nombre_archivo.split('.').pop().toUpperCase();
+                    const esMp4 = item.nombre_archivo.toLowerCase().endsWith('.mp4');
+                    
                     section += `
                         <div class="card">
-                            <div class="card-visual">
-                                <i class="fas fa-video"></i>
-                                <span>FORMATO ${ext}</span>
+                            <div class="video-container">
+                                ${esMp4 ? 
+                                    `<video controls preload="metadata">
+                                        <source src="${item.url_video}" type="video/mp4">
+                                        Tu navegador no soporta video.
+                                     </video>` : 
+                                    `<div class="avi-placeholder">
+                                        <i class="fas fa-file-video"></i>
+                                        <span>FORMATO AVI (Descargar para ver)</span>
+                                     </div>`
+                                }
                             </div>
                             <div class="card-info">
                                 <div class="card-tag">CAPTURA SEGURA</div>
@@ -188,9 +195,7 @@
             const bus = document.getElementById('searchInput').value.toLowerCase();
             const fec = document.getElementById('dateFilter').value;
             const fil = todosLosVideos.filter(v => {
-                const matchNombre = v.nombre_visible.toLowerCase().includes(bus);
-                const matchFecha = !fec || v.fecha_creacion.startsWith(fec);
-                return matchNombre && matchFecha;
+                return v.nombre_visible.toLowerCase().includes(bus) && (!fec || v.fecha_creacion.startsWith(fec));
             });
             renderizar(fil);
         }
@@ -206,7 +211,7 @@
         function cerrarSesion() { if(confirm("¿Cerrar sesión?")) window.location.href = "/"; }
 
         cargar();
-        setInterval(cargar, 60000); // Recarga cada minuto
+        setInterval(cargar, 60000);
     </script>
 </body>
 </html>
