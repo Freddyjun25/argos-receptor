@@ -23,21 +23,23 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 100;
         }
         header h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; text-transform: uppercase; }
+
+        /* BOTÓN CERRAR SESIÓN */
+        .btn-logout {
+            position: absolute; right: 20px; top: 25px;
+            background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.7rem; font-weight: bold;
+            transition: 0.3s;
+        }
+        .btn-logout:hover { background: var(--rojo); border-color: var(--rojo); }
         
-        /* ESTILO DEL INDICADOR COMO LINK */
         #ip-indicator { 
             margin-top: 8px; font-weight: 700; font-size: 0.85rem; 
             background: rgba(255,255,255,0.15); display: inline-block; padding: 4px 12px; border-radius: 4px;
             transition: 0.3s; border: 1px solid rgba(255,255,255,0.1);
         }
-        #ip-indicator.active {
-            cursor: pointer;
-            background: rgba(255,255,255,0.25);
-        }
-        #ip-indicator.active:hover {
-            background: var(--verde-tag);
-            transform: translateY(-2px);
-        }
+        #ip-indicator.active { cursor: pointer; background: rgba(255,255,255,0.25); }
+        #ip-indicator.active:hover { background: var(--verde-tag); transform: translateY(-2px); }
         #ip-indicator a { color: white; text-decoration: none; display: flex; align-items: center; gap: 8px; }
 
         .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
@@ -65,9 +67,7 @@
             border-left: 6px solid var(--azul-claro); text-transform: uppercase;
         }
 
-        .video-grid { 
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px;
-        }
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; }
         .video-grid .card:hover { transform: scale(1.12); z-index: 50; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
 
         .video-list { display: flex; flex-direction: column; gap: 10px; }
@@ -75,12 +75,8 @@
         .video-list .card-visual { width: 150px; height: 100px; }
         .video-list video { height: 100%; }
         .video-list .card-info { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
-        .video-list .card-footer { border: none; margin: 0; padding: 0; }
 
-        .card { 
-            background: white; border-radius: 12px; overflow: hidden; 
-            border: 1px solid #e5e7eb; transition: transform 0.3s ease; position: relative;
-        }
+        .card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb; transition: transform 0.3s ease; position: relative; }
         video { width: 100%; aspect-ratio: 4/3; display: block; object-fit: contain; background: #000; }
         .card-info { padding: 12px; }
         .card-title { font-size: 0.85rem; margin: 0; color: var(--azul-argos); font-weight: 700; }
@@ -95,6 +91,7 @@
 
     <header>
         <h1>SISTEMA ARGOS CORE</h1>
+        <button class="btn-logout" onclick="salir()"><i class="fas fa-sign-out-alt"></i> SALIR</button>
         <div id="ip-indicator">
             <i class="fas fa-sync fa-spin"></i> CONECTANDO...
         </div>
@@ -104,13 +101,11 @@
         <div class="toolbar">
             <button id="btnGrid" class="btn-view active" onclick="setVista('grid')"><i class="fas fa-th-large"></i></button>
             <button id="btnList" class="btn-view" onclick="setVista('list')"><i class="fas fa-list"></i></button>
-            
             <div class="search-container">
                 <input type="text" id="searchInput" placeholder="Buscar registros..." onkeyup="filtrar()">
             </div>
             <input type="date" id="dateFilter" onchange="filtrar()" style="padding:8px; border-radius:6px; border:1px solid #d1d5db;">
         </div>
-
         <div id="main-content"></div>
     </div>
 
@@ -120,6 +115,23 @@
         const BUCKET = "videos-receptor";
 
         const _supabase = supabase.createClient(URL_SB, KEY_SB);
+
+        // --- BLOQUE DE SEGURIDAD: COMPROBAR SESIÓN ---
+        async function protegerRuta() {
+            const { data: { session }, error } = await _supabase.auth.getSession();
+            if (!session || error) {
+                // Si no hay sesión, redirige inmediatamente al login
+                window.location.href = 'login.html';
+            }
+        }
+        protegerRuta(); // Se ejecuta al cargar el script
+
+        async function salir() {
+            const { error } = await _supabase.auth.signOut();
+            window.location.href = 'login.html';
+        }
+        // ---------------------------------------------
+
         let todosLosVideos = [];
         let vistaActual = 'grid';
 
@@ -139,11 +151,10 @@
                     indicator.classList.remove('active');
                     indicator.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ESP32 NO ENCONTRADO`;
                 }
-            } catch (e) {
-                console.error("Error de conexión con el servidor local");
-            }
+            } catch (e) { }
         }
 
+        // Resto de tus funciones (formatHora, formatDiaHeader, setVista, cargar, renderizar, eliminar, filtrar)...
         function formatHora(iso) {
             const d = new Date(iso);
             let hh = d.getHours();
@@ -177,20 +188,16 @@
         function renderizar(videos) {
             const container = document.getElementById('main-content');
             container.innerHTML = '';
-
             const grupos = {};
             videos.forEach(v => {
                 const dia = formatDiaHeader(v.created);
                 if (!grupos[dia]) grupos[dia] = [];
                 grupos[dia].push(v);
             });
-
             for (const [dia, vids] of Object.entries(grupos)) {
                 const section = document.createElement('div');
                 section.className = 'day-section';
-                
                 let htmlGrid = `<div class="${vistaActual === 'grid' ? 'video-grid' : 'video-list'}">`;
-
                 vids.forEach(file => {
                     const esVideo = file.name.toLowerCase().endsWith('.mp4');
                     htmlGrid += `
@@ -207,7 +214,6 @@
                             </div>
                         </div>`;
                 });
-
                 section.innerHTML = `<div class="day-header">${dia}</div>` + htmlGrid + `</div>`;
                 container.appendChild(section);
             }
