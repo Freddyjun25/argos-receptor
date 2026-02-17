@@ -18,7 +18,7 @@ const supabase = createClient(
 
 // --- CONFIGURACIÓN DE RUTAS Y SEGURIDAD ---
 
-// 1. Servir archivos estáticos (CSS, Imágenes, JS) pero BLOQUEAR el acceso directo a los HTML
+// 1. Servir archivos estáticos pero BLOQUEAR el acceso directo a los HTML
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 // 2. Ruta Raíz: Solo sirve el Login
@@ -26,9 +26,14 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// 3. Ruta Dashboard: Solo accesible mediante esta URL
+// 3. Ruta Dashboard: Ahora apunta al archivo con el diseño blanco
 app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
+// 4. Limpieza de URLs viejas: Redirigir /index al login
+app.get(['/index', '/index.html'], (req, res) => {
+    res.redirect('/');
 });
 
 // --- RECEPCIÓN DE VIDEO (ESP32) ---
@@ -90,9 +95,7 @@ app.get('/get_esp_ip', (req, res) => {
     res.json({ ip: ultimaIpEsp32 });
 });
 
-// --- 🛡️ EL CANDADO FINAL: UNIFICACIÓN ---
-// Si alguien intenta entrar a /index, /index.html o cualquier ruta que no sea / o /dashboard
-// el servidor lo mandará de vuelta al Login automáticamente.
+// --- 🛡️ EL CANDADO FINAL ---
 app.get('*', (req, res) => {
     res.redirect('/');
 });
