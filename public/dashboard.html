@@ -10,114 +10,128 @@
         :root {
             --azul-argos: #003366;
             --azul-claro: #004a94;
-            --fondo: #f4f7f9;
+            --fondo: #f0f4f8;
             --texto: #1e293b;
             --verde-tag: #10b981;
             --rojo: #ef4444;
-            --dorado: #f59e0b;
         }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; color: var(--texto); }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: var(--fondo); 
+            margin: 0; 
+            color: var(--texto);
+            overflow-x: hidden;
+        }
         
+        /* HEADER LIMPIO */
         header {
             background: var(--azul-argos);
-            color: white; padding: 20px; text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            color: white; padding: 15px; text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: sticky; top: 0; z-index: 100;
         }
-        header h1 { margin: 0; font-size: 1.5rem; letter-spacing: 2px; font-weight: 800; text-transform: uppercase; }
+        header h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; font-weight: 800; }
         
-        .header-stats {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 15px;
+        #ip-indicator { 
+            margin-top: 8px; font-weight: 700; font-size: 0.85rem; 
+            background: rgba(255,255,255,0.15); display: inline-block;
+            padding: 4px 12px; border-radius: 4px;
         }
 
-        .stat-pill {
-            background: rgba(255,255,255,0.1);
-            padding: 5px 15px;
-            border-radius: 50px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            border: 1px solid rgba(255,255,255,0.2);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        #today-count { color: var(--verde-tag); }
-
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
         
+        /* TOOLBAR */
         .toolbar {
-            background: white; border-radius: 10px; padding: 12px;
+            background: white; border-radius: 8px; padding: 12px;
             display: flex; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            margin-bottom: 20px; align-items: center;
+            margin-bottom: 25px; align-items: center;
         }
-        .btn-view {
-            background: var(--azul-argos); color: white; border: none;
-            padding: 10px; border-radius: 6px; cursor: pointer; width: 45px; transition: 0.2s;
-        }
-        .btn-view:hover { background: var(--azul-claro); }
-
         .search-container { flex: 1; }
         .search-container input {
             width: 100%; padding: 10px; border-radius: 6px;
-            border: 1px solid #e2e8f0; outline: none;
+            border: 1px solid #d1d5db; outline: none; font-size: 0.9rem;
         }
 
-        /* DISEÑO DE CUADRITOS PEQUEÑOS */
+        /* GRID DE VIDEOS OPTIMIZADO */
         .video-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
-            gap: 15px; 
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
+            gap: 20px;
+            perspective: 1000px;
         }
 
-        /* DISEÑO DE LISTA */
-        .video-list { display: flex; flex-direction: column; gap: 10px; }
+        /* TARJETA CON EFECTO ZOOM */
+        .card { 
+            background: white; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
+            border: 1px solid #e5e7eb;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, z-index 0s;
+            position: relative;
+            z-index: 1;
+        }
 
-        .card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eef2f7; transition: 0.2s; }
+        .card:hover { 
+            transform: scale(1.12); /* Se agranda sin ocupar toda la pantalla */
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+            z-index: 50; /* Se pone por encima de los demás */
+        }
+
+        .card-visual { width: 100%; background: #000; position: relative; }
         
-        /* Adaptación para modo lista */
-        .video-list .card { display: flex; align-items: center; height: 80px; }
-        .video-list .card-visual { width: 120px; height: 80px; }
-        .video-list .card-info { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
-        .video-list .card-footer { border: none; padding: 0; margin: 0; }
+        /* REPRODUCTOR CON CONTROLES */
+        video { 
+            width: 100%; 
+            aspect-ratio: 4/3; 
+            display: block; 
+            object-fit: contain;
+            background: #000;
+        }
 
-        .card-visual video { width: 100%; height: 100%; object-fit: cover; background: #000; }
-        .card-info { padding: 12px; }
-        .card-title { font-size: 0.85rem; margin: 0; color: var(--azul-argos); font-weight: 700; }
-        .card-tag { font-size: 0.6rem; font-weight: 800; color: var(--verde-tag); text-transform: uppercase; margin-bottom: 4px; display: block;}
+        .card-info { padding: 12px; background: white; }
+        .card-title { font-size: 0.9rem; margin: 0; color: var(--azul-argos); font-weight: 700; }
+        .card-tag { font-size: 0.65rem; font-weight: 800; color: var(--verde-tag); text-transform: uppercase; margin-bottom: 5px; display: block; }
 
-        .card-footer { display: flex; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 10px; margin-top: 10px; }
-        .btn-download { background: var(--azul-argos); color: white; text-decoration: none; padding: 8px; border-radius: 5px; font-size: 0.75rem; flex: 1; text-align: center; font-weight: bold; }
-        .btn-delete { color: var(--rojo); background: none; border: none; cursor: pointer; padding: 5px; font-size: 1rem; }
+        .card-footer { 
+            display: flex; gap: 8px; margin-top: 10px; padding-top: 10px; 
+            border-top: 1px solid #f3f4f6; 
+        }
 
-        .status-online { color: #34d399; }
-        .status-offline { color: #fb7185; }
+        .btn-download { 
+            background: var(--azul-argos); color: white; text-decoration: none; 
+            padding: 8px; border-radius: 5px; font-size: 0.75rem; flex: 1; 
+            text-align: center; font-weight: bold; transition: 0.2s;
+        }
+        .btn-download:hover { background: var(--azul-claro); }
+
+        .btn-delete { color: var(--rojo); background: none; border: none; cursor: pointer; padding: 5px; font-size: 1.1rem; }
+        
+        .status-online { color: #10b981; }
+        .status-offline { color: #f87171; }
+
+        /* Scrollbar suave */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body>
 
     <header>
         <h1>SISTEMA ARGOS CORE</h1>
-        <div class="header-stats">
-            <div id="ip-indicator" class="stat-pill">
-                <i class="fas fa-sync fa-spin"></i> BUSCANDO IP...
-            </div>
-            <div class="stat-pill">
-                <i class="fas fa-video"></i> HOY: <span id="today-count">0</span>
-            </div>
+        <div id="ip-indicator">
+            <i class="fas fa-circle-notch fa-spin"></i> SINCRONIZANDO RED...
         </div>
     </header>
 
     <div class="container">
         <div class="toolbar">
-            <button class="btn-view" onclick="cambiarVista('grid')" title="Vista Cuadros"><i class="fas fa-th"></i></button>
-            <button class="btn-view" onclick="cambiarVista('list')" title="Vista Lista"><i class="fas fa-list"></i></button>
             <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Buscar por fecha, hora o IP..." onkeyup="filtrar()">
+                <input type="text" id="searchInput" placeholder="Filtrar por nombre o hora..." onkeyup="filtrar()">
             </div>
-            <input type="date" id="dateFilter" onchange="filtrar()" style="padding:8px; border-radius:6px; border:1px solid #e2e8f0;">
+            <input type="date" id="dateFilter" onchange="filtrar()" style="padding:9px; border-radius:6px; border:1px solid #d1d5db;">
         </div>
 
         <div id="main-content" class="video-grid"></div>
@@ -130,25 +144,24 @@
 
         const _supabase = supabase.createClient(URL_SB, KEY_SB);
         let todosLosVideos = [];
-        let vistaActual = 'grid';
 
-        // 1. REVISAR ESTADO DEL ESP32
+        // 1. IP INDICATOR (Se actualiza vía API)
         async function checkSystemStatus() {
             try {
-                const response = await fetch('/get_esp_ip');
-                const data = await response.json();
+                const res = await fetch('/get_esp_ip');
+                const data = await res.json();
                 const indicator = document.getElementById('ip-indicator');
-                if (data.ip && data.ip !== "No reportada" && data.ip !== "Buscando...") {
+                if (data.ip && data.ip !== "Buscando..." && data.ip !== "No reportada") {
                     indicator.innerHTML = `<span class="status-online"><i class="fas fa-network-wired"></i> ESP32 IP: ${data.ip}</span>`;
                 } else {
-                    indicator.innerHTML = `<span class="status-offline"><i class="fas fa-power-off"></i> DISPOSITIVO OFFLINE</span>`;
+                    indicator.innerHTML = `<span class="status-offline"><i class="fas fa-exclamation-triangle"></i> ESP32 DESCONECTADO</span>`;
                 }
             } catch (e) {}
         }
 
-        // 2. FORMATEAR FECHA: DD/MM/YYYY HH:MMam/pm
-        function formatFechaArgos(isoString) {
-            const d = new Date(isoString);
+        // 2. FORMATEO DE FECHA (Exactamente como pediste)
+        function formatFecha(iso) {
+            const d = new Date(iso);
             const dia = d.getDate().toString().padStart(2, '0');
             const mes = (d.getMonth() + 1).toString().padStart(2, '0');
             const anio = d.getFullYear();
@@ -159,93 +172,70 @@
             return `${dia}/${mes}/${anio} ${hh}:${mm}${ampm}`;
         }
 
-        // 3. CARGAR DATOS
+        // 3. CARGA DE DATOS (Manejado con strings para mayor fluidez)
         async function cargar() {
             try {
                 const response = await fetch('/api/lista-videos');
                 todosLosVideos = await response.json();
-                
-                // Actualizar contador de hoy
-                actualizarContadorHoy();
-                
                 renderizar(todosLosVideos);
-            } catch (e) { console.error("Error al cargar videos"); }
+            } catch (e) { console.error("Error al cargar"); }
         }
 
-        function actualizarContadorHoy() {
-            const hoy = new Date().toISOString().split('T')[0];
-            const videosHoy = todosLosVideos.filter(v => v.created.startsWith(hoy));
-            document.getElementById('today-count').innerText = videosHoy.length;
-        }
-
-        // 4. RENDERIZAR INTERFAZ
         function renderizar(videos) {
             const container = document.getElementById('main-content');
-            container.className = vistaActual === 'grid' ? 'video-grid' : 'video-list';
-            container.innerHTML = '';
+            let htmlFinal = '';
 
             if (videos.length === 0) {
-                container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:50px; color:#94a3b8;">NO SE ENCONTRARON EVIDENCIAS</div>';
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:50px;">SIN EVIDENCIAS REGISTRADAS</div>';
                 return;
             }
 
             videos.forEach(file => {
                 const esVideo = file.name.toLowerCase().endsWith('.mp4');
-                const fechaPretty = formatFechaArgos(file.created);
+                const fecha = formatFecha(file.created);
 
-                container.innerHTML += `
+                htmlFinal += `
                     <div class="card">
                         <div class="card-visual">
                             ${esVideo ? 
-                                `<video preload="metadata" muted onmouseover="this.play()" onmouseout="this.pause(); this.currentTime=0;">
+                                `<video controls preload="metadata">
                                     <source src="${file.url}" type="video/mp4">
-                                </video>` : 
-                                `<div style="text-align:center;color:#ccc;padding:20px"><i class="fas fa-file-video fa-2x"></i><br><small>AVI</small></div>`
+                                 </video>` : 
+                                `<div style="padding:40px; text-align:center; color:#94a3b8;"><i class="fas fa-file-video fa-3x"></i><br><small>AVI</small></div>`
                             }
                         </div>
                         <div class="card-info">
-                            <div>
-                                <span class="card-tag">EVIDENCIA PROCESADA</span>
-                                <h4 class="card-title">${fechaPretty}</h4>
-                            </div>
+                            <span class="card-tag">Registro Argos</span>
+                            <h4 class="card-title">${fecha}</h4>
                             <div class="card-footer">
-                                <a href="${file.url}" download target="_blank" class="btn-download"><i class="fas fa-download"></i> GUARDAR</a>
-                                <button onclick="eliminar('${file.name}')" class="btn-delete" title="Eliminar"><i class="fas fa-trash-alt"></i></button>
+                                <a href="${file.url}" download target="_blank" class="btn-download"><i class="fas fa-cloud-download-alt"></i> DESCARGAR</a>
+                                <button onclick="eliminar('${file.name}')" class="btn-delete"><i class="fas fa-trash-alt"></i></button>
                             </div>
                         </div>
                     </div>`;
             });
-        }
 
-        function cambiarVista(modo) {
-            vistaActual = modo;
-            renderizar(todosLosVideos);
+            container.innerHTML = htmlFinal; // Actualización única de DOM para mayor velocidad
         }
 
         async function eliminar(n) {
-            if (confirm("¿Estás seguro de eliminar esta evidencia permanentemente?")) {
-                const { error } = await _supabase.storage.from(BUCKET).remove([n]);
-                if (!error) cargar();
-                else alert("Error al eliminar");
+            if (confirm("¿Eliminar evidencia permanentemente?")) {
+                await _supabase.storage.from(BUCKET).remove([n]);
+                cargar();
             }
         }
 
         function filtrar() {
             const b = document.getElementById('searchInput').value.toLowerCase();
             const f = document.getElementById('dateFilter').value;
-            const res = todosLosVideos.filter(v => {
-                const coincideBusqueda = v.name.toLowerCase().includes(b);
-                const coincideFecha = !f || v.created.startsWith(f);
-                return coincideBusqueda && coincideFecha;
-            });
+            const res = todosLosVideos.filter(v => v.name.toLowerCase().includes(b) && (!f || v.created.startsWith(f)));
             renderizar(res);
         }
 
-        // INICIO
         checkSystemStatus();
         cargar();
-        setInterval(checkSystemStatus, 5000); // Estado cada 5 seg
-        setInterval(cargar, 30000);          // Videos cada 30 seg
+        setInterval(checkSystemStatus, 5000);
+        setInterval(cargar, 30000);
     </script>
 </body>
 </html>
