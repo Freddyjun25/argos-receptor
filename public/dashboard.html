@@ -3,186 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARGOS CORE - Intelligence System</title>
+    <title>SISTEMA ARGOS CORE</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --azul-argos: #001f3f;
-            --azul-neon: #0074D9;
-            --cyber-green: #2ECC40;
-            --fondo: #050505;
+            --azul-argos: #003366;
+            --azul-claro: #004a94;
+            --verde-ok: #10b981;
+            --rojo-off: #ef4444;
+            --fondo: #f0f2f5;
+            --texto: #1e293b;
         }
         
-        body { 
-            font-family: 'Consolas', monospace; 
-            background: var(--fondo); 
-            color: #fff; 
-            margin: 0; 
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; color: var(--texto); }
 
         header {
-            border-bottom: 2px solid var(--azul-neon);
-            padding: 20px;
-            text-align: center;
-            background: rgba(0, 116, 217, 0.1);
+            background: var(--azul-argos);
+            color: white; padding: 25px 30px; text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        header h1 { margin: 0; font-size: 1.8rem; letter-spacing: 2px; font-weight: 700; text-transform: uppercase; }
+
+        /* EL INDICADOR DE IP QUE MARCASTE EN EL CÍRCULO ROJO */
+        #ip-status {
+            margin-top: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            min-height: 1.2em;
         }
 
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-
-        /* GRID DE CÁMARAS */
-        .camera-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
+        .container { max-width: 1200px; margin: 25px auto; padding: 0 20px; }
+        
+        .toolbar {
+            background: white; border-radius: 8px; padding: 15px;
+            display: flex; gap: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
         }
 
-        .camera-card {
-            background: #111;
-            border: 1px solid #333;
-            border-radius: 4px;
-            overflow: hidden;
-            position: relative;
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        
+        .card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #eef2f7; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+
+        .card-visual { 
+            height: 160px; background: #f8fafc; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; color: #94a3b8; border-bottom: 1px solid #f1f5f9;
         }
+        .card-visual i { font-size: 3.5rem; }
+        
+        .card-info { padding: 15px; }
+        .card-tag { display: inline-block; background: #ecfdf5; color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; margin-bottom: 10px; text-transform: uppercase; }
+        .card-title { font-size: 0.9rem; margin: 0 0 12px; color: var(--azul-argos); font-weight: 700; line-height: 1.4; }
 
-        .camera-card:hover { border-color: var(--azul-neon); }
-
-        .video-container {
-            width: 100%;
-            height: 220px;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .card-footer { display: flex; gap: 8px; align-items: center; }
+        .btn-download { 
+            background: var(--azul-argos); color: white; text-decoration: none; 
+            padding: 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 800;
+            display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1;
         }
+        .btn-delete { background: #fff; color: #ef4444; border: 1px solid #fee2e2; padding: 9px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .btn-delete:hover { background: #fee2e2; }
 
-        /* Forzamos que el video ocupe el espacio sin desordenar */
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* Evita que se estire feo */
-            background: #000;
-        }
-
-        .info-panel {
-            padding: 15px;
-            background: rgba(255,255,255,0.05);
-            font-size: 0.85rem;
-        }
-
-        .status-tag {
-            color: var(--cyber-green);
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-
-        .btn-action {
-            display: inline-block;
-            padding: 8px 12px;
-            background: var(--azul-neon);
-            color: white;
-            text-decoration: none;
-            border-radius: 3px;
-            font-size: 0.7rem;
-            margin-right: 5px;
-            cursor: pointer;
-            border: none;
-        }
-
-        .btn-delete { background: #FF4136; }
-
-        .timestamp { color: #aaa; font-size: 0.75rem; }
-
-        /* Efecto de escaneo para el estilo universidad/seguridad */
-        .scanline {
-            width: 100%;
-            height: 2px;
-            background: rgba(0, 255, 0, 0.1);
-            position: absolute;
-            top: 0;
-            animation: scan 4s linear infinite;
-            pointer-events: none;
-        }
-
-        @keyframes scan {
-            0% { top: 0; }
-            100% { top: 100%; }
-        }
+        .status-text { display: flex; align-items: center; justify-content: center; gap: 8px; }
     </style>
 </head>
 <body>
 
-<header>
-    <h1 style="margin:0; letter-spacing: 5px;">ARGOS <span style="color:var(--azul-neon)">INTELLIGENCE</span></h1>
-    <p style="font-size: 0.8rem; color: var(--azul-neon)">SISTEMA DE MONITOREO UNIVERSITARIO - MODO PRUEBAS</p>
-</header>
+    <header>
+        <h1>SISTEMA ARGOS CORE</h1>
+        <div id="ip-status">
+            <span style="opacity: 0.6; font-size: 0.8rem;"><i class="fas fa-spinner fa-spin"></i> VERIFICANDO SISTEMA...</span>
+        </div>
+    </header>
 
-<div class="container">
-    <div id="msg" style="margin-bottom: 20px; color: var(--azul-neon)"> > Inicializando protocolo de sincronización...</div>
-    <div id="main-content" class="camera-grid"></div>
-</div>
+    <div class="container">
+        <div class="toolbar">
+            <div style="position:relative; flex:1;">
+                <i class="fas fa-search" style="position:absolute; left:12px; top:12px; color:#94a3b8;"></i>
+                <input type="text" id="searchInput" placeholder="Buscar evidencia..." onkeyup="filtrar()" style="width:100%; padding:10px 10px 10px 35px; border-radius:6px; border:1px solid #e2e8f0; box-sizing:border-box;">
+            </div>
+            <input type="date" id="dateFilter" onchange="filtrar()" style="padding:9px; border-radius:6px; border:1px solid #e2e8f0; color:#64748b;">
+        </div>
 
-<script>
-    const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
-    const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk";
-    const BUCKET = "videos-receptor";
+        <div id="status-msg" style="margin-bottom:15px; font-size:0.8rem; color:#64748b; font-weight:600; text-transform:uppercase;"></div>
+        <div id="main-content" class="video-grid"></div>
+    </div>
 
-    const _supabase = supabase.createClient(URL_SB, KEY_SB);
+    <script>
+        const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
+        const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk";
+        const BUCKET = "videos-receptor";
 
-    async function obtenerEvidencias() {
-        const { data, error } = await _supabase.storage.from(BUCKET).list('videos', {
-            limit: 100,
-            sortBy: { column: 'name', order: 'desc' }
-        });
+        const _supabase = supabase.createClient(URL_SB, KEY_SB);
+        let todosLosVideos = [];
 
-        if (error) return;
+        async function cargar() {
+            try {
+                const { data, error } = await _supabase.storage.from(BUCKET).list('', {
+                    limit: 100, sortBy: { column: 'name', order: 'desc' }
+                });
 
-        const container = document.getElementById('main-content');
-        container.innerHTML = '';
+                if (error) throw error;
 
-        data.forEach(file => {
-            if (file.name === ".emptyFolderPlaceholder") return;
+                // Solo archivos de video
+                todosLosVideos = data.filter(f => f.name.toLowerCase().endsWith('.avi') || f.name.toLowerCase().endsWith('.mp4'));
 
-            const { data: urlData } = _supabase.storage.from(BUCKET).getPublicUrl(`videos/${file.name}`);
+                actualizarEstadoSistema(todosLosVideos);
+                renderizar(todosLosVideos);
+
+            } catch (err) {
+                console.error("Error cargando datos:", err);
+            }
+        }
+
+        function actualizarEstadoSistema(archivos) {
+            const display = document.getElementById('ip-status');
             
-            const card = `
-                <div class="camera-card">
-                    <div class="scanline"></div>
-                    <div class="video-container">
-                        <video controls muted poster="https://via.placeholder.com/400x220/000000/0074D9?text=CARGANDO+STREAM...">
-                            <source src="${urlData.publicUrl}" type="video/mp4">
-                            Format Not Supported
-                        </video>
-                    </div>
-                    <div class="info-panel">
-                        <div class="status-tag"><i class="fas fa-circle"></i> EN LINEA / EVIDENCIA</div>
-                        <div class="timestamp">ARCHIVO: ${file.name}</div>
-                        <div class="timestamp">FECHA: ${new Date(file.created_at).toLocaleString()}</div>
-                        <div style="margin-top:15px;">
-                            <a href="${urlData.publicUrl}" download class="btn-action"><i class="fas fa-download"></i> EXPORTAR</a>
-                            <button onclick="eliminar('${file.name}')" class="btn-action btn-delete"><i class="fas fa-trash"></i> BORRAR</button>
+            if (archivos.length > 0) {
+                const ultimo = archivos[0];
+                const fechaCarga = new Date(ultimo.created_at);
+                const ahora = new Date();
+                const diffMinutos = (ahora - fechaCarga) / 1000 / 60;
+
+                // Si se detecta actividad en los últimos 15 minutos
+                if (diffMinutos < 15) {
+                    const partes = ultimo.name.split('_');
+                    // Busca una parte que tenga puntos (formato IP)
+                    let ip = partes.find(p => p.split('.').length === 4) || "DETECTADA";
+                    ip = ip.replace('.avi', '').replace('.mp4', '');
+                    
+                    display.innerHTML = `<span class="status-text" style="color: var(--verde-ok)">
+                        <i class="fas fa-signal"></i> IP: ${ip}
+                    </span>`;
+                } else {
+                    display.innerHTML = `<span class="status-text" style="color: var(--rojo-off); opacity: 0.8;">
+                        <i class="fas fa-power-off"></i> OFFLINE
+                    </span>`;
+                }
+            } else {
+                display.innerHTML = `<span class="status-text" style="color: var(--rojo-off)">OFFLINE</span>`;
+            }
+        }
+
+        function renderizar(videos) {
+            const container = document.getElementById('main-content');
+            const msg = document.getElementById('status-msg');
+            container.innerHTML = '';
+            msg.innerText = `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS ENCONTRADAS`;
+
+            videos.forEach(file => {
+                const { data: urlData } = _supabase.storage.from(BUCKET).getPublicUrl(file.name);
+                const esAvi = file.name.toLowerCase().endsWith('.avi');
+                
+                const card = `
+                    <div class="card">
+                        <div class="card-visual">
+                            <i class="fas ${esAvi ? 'fa-file-video' : 'fa-play-circle'}"></i>
+                            <span style="font-size:0.65rem; font-weight:800; margin-top:10px; color:#cbd5e1;">FORMATO ${esAvi ? 'AVI' : 'MP4'}</span>
                         </div>
-                    </div>
-                </div>
-            `;
-            container.innerHTML += card;
-        });
-        document.getElementById('msg').innerText = ` > SINCRO OK: ${data.length} REGISTROS ENCONTRADOS`;
-    }
+                        <div class="card-info">
+                            <div class="card-tag">CAPTURA SEGURA</div>
+                            <h4 class="card-title">${file.name}</h4>
+                            <div class="card-footer">
+                                <a href="${urlData.publicUrl}" download target="_blank" class="btn-download">
+                                    <i class="fas fa-download"></i> DESCARGAR
+                                </a>
+                                <button onclick="eliminar('${file.name}')" class="btn-delete" title="Eliminar">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>`;
+                container.innerHTML += card;
+            });
+        }
 
-    async function eliminar(nombre) {
-        if(!confirm("¿CONFIRMA ELIMINACIÓN DE EVIDENCIA?")) return;
-        await _supabase.storage.from(BUCKET).remove([`videos/${nombre}`]);
-        obtenerEvidencias();
-    }
+        async function eliminar(n) {
+            if (confirm("¿Seguro que desea eliminar esta evidencia de forma permanente?")) {
+                await _supabase.storage.from(BUCKET).remove([n]);
+                cargar();
+            }
+        }
 
-    obtenerEvidencias();
-    // Refresco cada 15 segundos para las pruebas
-    setInterval(obtenerEvidencias, 15000);
-</script>
+        function filtrar() {
+            const bus = document.getElementById('searchInput').value.toLowerCase();
+            const fec = document.getElementById('dateFilter').value;
+            const fil = todosLosVideos.filter(v => {
+                const coincideNombre = v.name.toLowerCase().includes(bus);
+                const coincideFecha = !fec || v.created_at.startsWith(fec);
+                return coincideNombre && coincideFecha;
+            });
+            renderizar(fil);
+        }
 
+        cargar();
+        setInterval(cargar, 30000); // Actualiza cada 30 segundos
+    </script>
 </body>
 </html>
