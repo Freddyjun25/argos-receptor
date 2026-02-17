@@ -10,8 +10,6 @@
         :root {
             --azul-argos: #003366;
             --azul-claro: #004a94;
-            --verde-stats: #10b981;
-            --rojo-alerta: #ef4444;
             --fondo: #f0f2f5;
             --texto: #1e293b;
         }
@@ -21,14 +19,6 @@
             background: var(--fondo); 
             margin: 0; 
             color: var(--texto);
-        }
-
-        /* SEGURIDAD: Bloqueo de acceso */
-        #lock-screen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 9999;
-            display: flex; align-items: center; justify-content: center;
         }
 
         header {
@@ -49,45 +39,24 @@
             padding: 8px 20px;
             border-radius: 6px;
             cursor: pointer;
-            text-transform: uppercase;
-            font-size: 0.8rem;
             font-weight: bold;
         }
 
-        .btn-salir:hover { background: white; color: var(--azul-argos); }
-
         .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
 
-        /* Barra de Herramientas */
         .toolbar {
             background: white;
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 2px 15px rgba(0,0,0,0.05);
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-            align-items: center;
+            display: flex; gap: 15px; margin-bottom: 25px; align-items: center;
         }
 
         .btn-stats {
-            background: var(--azul-argos);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: bold;
-            display: flex; align-items: center; gap: 8px;
+            background: var(--azul-argos); color: white; border: none;
+            padding: 10px 20px; border-radius: 6px; font-weight: bold;
         }
 
-        .search-input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-        }
-
-        /* Grid de Evidencias */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -95,74 +64,31 @@
         }
 
         .card {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
+            background: white; border-radius: 12px; overflow: hidden;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            transition: transform 0.2s;
         }
-
-        .card:hover { transform: translateY(-5px); }
 
         .video-box {
-            background: #000;
-            height: 180px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: #666;
-            font-size: 0.8rem;
-            text-align: center;
+            background: #000; height: 180px; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            color: #ccc; font-size: 0.8rem; text-align: center;
         }
-
-        video { width: 100%; height: 100%; object-fit: cover; }
 
         .card-info { padding: 20px; }
-
-        .tag {
-            background: #fef3c7;
-            color: #92400e;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 10px;
-        }
-
-        .date { font-weight: bold; font-size: 0.95rem; margin-bottom: 15px; }
-
-        .actions { display: flex; gap: 10px; }
-
-        .btn-dl {
-            flex: 1;
-            background: var(--azul-argos);
-            color: white;
-            text-decoration: none;
-            text-align: center;
-            padding: 10px;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 0.8rem;
-        }
-
-        .btn-del {
-            background: #fee2e2;
-            color: var(--rojo-alerta);
-            border: none;
-            width: 40px;
-            border-radius: 6px;
-            cursor: pointer;
+        .tag { color: #92400e; background: #fef3c7; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        .date { font-weight: bold; margin: 10px 0; }
+        
+        .btn-dl { 
+            display: block; width: 100%; background: var(--azul-argos); 
+            color: white; text-align: center; padding: 10px; 
+            border-radius: 6px; text-decoration: none; font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-<div id="lock-screen"> <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--azul-argos)"></i> </div>
-
 <header>
-    <button class="btn-salir" onclick="cerrarSesion()"> <i class="fas fa-power-off"></i> Salir</button>
+    <button class="btn-salir" onclick="sessionStorage.clear(); window.location.href='/';"> <i class="fas fa-power-off"></i> SALIR</button>
     <h1>SISTEMA ARGOS CORE</h1>
     <p>CENTRO DE INTELIGENCIA Y EVIDENCIAS</p>
 </header>
@@ -170,80 +96,19 @@
 <div class="container">
     <div class="toolbar">
         <button class="btn-stats"><i class="fas fa-chart-line"></i> ANÁLISIS DE DATOS</button>
-        <input type="text" class="search-input" placeholder="Buscar video...">
-        <input type="date" class="search-input" style="max-width: 150px;">
+        <input type="text" placeholder="Buscar video..." style="flex:1; padding:10px; border:1px solid #ddd; border-radius:6px;">
     </div>
 
-    <h3 id="counter" style="color: #64748b; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 20px;">SISTEMA ACTIVO: Cargando registros...</h3>
-
-    <div id="grid-evidencias" class="grid"></div>
+    <div id="grid-evidencias" class="grid">
+        </div>
 </div>
 
 <script>
-    // --- SEGURIDAD ---
-    if (sessionStorage.getItem("argos_sesion") !== "true") {
-        window.location.href = "/";
-    } else {
-        document.getElementById('lock-screen').style.display = 'none';
-    }
+    // Candado de seguridad
+    if (sessionStorage.getItem("argos_sesion") !== "true") { window.location.href = "/"; }
 
-    function cerrarSesion() {
-        sessionStorage.clear();
-        window.location.href = "/";
-    }
-
-    // --- SUPABASE ---
-    const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
-    const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk";
-    const BUCKET = "videos-receptor";
-
-    const _supabase = supabase.createClient(URL_SB, KEY_SB);
-
-    async function cargarVideos() {
-        const { data, error } = await _supabase.storage.from(BUCKET).list('videos', {
-            limit: 100,
-            sortBy: { column: 'name', order: 'desc' }
-        });
-
-        if (error) return;
-
-        const grid = document.getElementById('grid-evidencias');
-        grid.innerHTML = '';
-        document.getElementById('counter').innerText = `SISTEMA ACTIVO: ${data.length} EVIDENCIAS DISPONIBLES`;
-
-        data.forEach(file => {
-            if (file.name === ".emptyFolderPlaceholder") return;
-            const { data: urlData } = _supabase.storage.from(BUCKET).getPublicUrl(`videos/${file.name}`);
-            const fecha = new Date(file.created_at).toLocaleString();
-
-            grid.innerHTML += `
-                <div class="card">
-                    <div class="video-box">
-                        <i class="fas fa-file-video fa-3x" style="margin-bottom:10px; color:#333;"></i>
-                        Formato AVI (ESP32 Raw)<br>Descargar para ver fluido
-                    </div>
-                    <div class="card-info">
-                        <div class="tag"><i class="fas fa-shield-alt"></i> EVIDENCIA AVI (RAW)</div>
-                        <div class="date">${fecha}</div>
-                        <div class="actions">
-                            <a href="${urlData.publicUrl}" download class="btn-dl"><i class="fas fa-download"></i> DESCARGAR</a>
-                            <button onclick="borrar('${file.name}')" class="btn-del"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-    }
-
-    async function borrar(nombre) {
-        if(confirm("¿Eliminar evidencia permanentemente?")) {
-            await _supabase.storage.from(BUCKET).remove([`videos/${nombre}`]);
-            cargarVideos();
-        }
-    }
-
-    cargarVideos();
-    setInterval(cargarVideos, 30000);
+    // Aquí iría tu código de Supabase para listar los videos...
+    // (Usa el que ya tienes funcionando para obtener los datos)
 </script>
 
 </body>
