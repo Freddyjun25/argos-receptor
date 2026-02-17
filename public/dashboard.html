@@ -21,10 +21,8 @@
             background: var(--fondo); 
             margin: 0; 
             color: var(--texto);
-            overflow-x: hidden;
         }
         
-        /* HEADER LIMPIO */
         header {
             background: var(--azul-argos);
             color: white; padding: 15px; text-align: center;
@@ -41,7 +39,6 @@
 
         .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
         
-        /* TOOLBAR */
         .toolbar {
             background: white; border-radius: 8px; padding: 12px;
             display: flex; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -53,12 +50,26 @@
             border: 1px solid #d1d5db; outline: none; font-size: 0.9rem;
         }
 
-        /* GRID DE VIDEOS OPTIMIZADO */
+        /* ESTILO SEPARADOR POR DÍA */
+        .day-section { margin-bottom: 40px; }
+        
+        .day-header {
+            background: #e2e8f0;
+            color: var(--azul-argos);
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            border-left: 6px solid var(--azul-claro);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
         .video-grid { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
-            gap: 20px;
-            perspective: 1000px;
+            gap: 25px;
         }
 
         /* TARJETA CON EFECTO ZOOM */
@@ -68,20 +79,17 @@
             overflow: hidden; 
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
             border: 1px solid #e5e7eb;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, z-index 0s;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
             position: relative;
             z-index: 1;
         }
 
         .card:hover { 
-            transform: scale(1.12); /* Se agranda sin ocupar toda la pantalla */
+            transform: scale(1.12);
             box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
-            z-index: 50; /* Se pone por encima de los demás */
+            z-index: 50;
         }
 
-        .card-visual { width: 100%; background: #000; position: relative; }
-        
-        /* REPRODUCTOR CON CONTROLES */
         video { 
             width: 100%; 
             aspect-ratio: 4/3; 
@@ -90,7 +98,7 @@
             background: #000;
         }
 
-        .card-info { padding: 12px; background: white; }
+        .card-info { padding: 12px; }
         .card-title { font-size: 0.9rem; margin: 0; color: var(--azul-argos); font-weight: 700; }
         .card-tag { font-size: 0.65rem; font-weight: 800; color: var(--verde-tag); text-transform: uppercase; margin-bottom: 5px; display: block; }
 
@@ -102,19 +110,13 @@
         .btn-download { 
             background: var(--azul-argos); color: white; text-decoration: none; 
             padding: 8px; border-radius: 5px; font-size: 0.75rem; flex: 1; 
-            text-align: center; font-weight: bold; transition: 0.2s;
+            text-align: center; font-weight: bold;
         }
-        .btn-download:hover { background: var(--azul-claro); }
 
         .btn-delete { color: var(--rojo); background: none; border: none; cursor: pointer; padding: 5px; font-size: 1.1rem; }
         
         .status-online { color: #10b981; }
         .status-offline { color: #f87171; }
-
-        /* Scrollbar suave */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -129,12 +131,12 @@
     <div class="container">
         <div class="toolbar">
             <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Filtrar por nombre o hora..." onkeyup="filtrar()">
+                <input type="text" id="searchInput" placeholder="Filtrar evidencias..." onkeyup="filtrar()">
             </div>
             <input type="date" id="dateFilter" onchange="filtrar()" style="padding:9px; border-radius:6px; border:1px solid #d1d5db;">
         </div>
 
-        <div id="main-content" class="video-grid"></div>
+        <div id="main-content"></div>
     </div>
 
     <script>
@@ -145,13 +147,12 @@
         const _supabase = supabase.createClient(URL_SB, KEY_SB);
         let todosLosVideos = [];
 
-        // 1. IP INDICATOR (Se actualiza vía API)
         async function checkSystemStatus() {
             try {
                 const res = await fetch('/get_esp_ip');
                 const data = await res.json();
                 const indicator = document.getElementById('ip-indicator');
-                if (data.ip && data.ip !== "Buscando..." && data.ip !== "No reportada") {
+                if (data.ip && data.ip !== "Buscando...") {
                     indicator.innerHTML = `<span class="status-online"><i class="fas fa-network-wired"></i> ESP32 IP: ${data.ip}</span>`;
                 } else {
                     indicator.innerHTML = `<span class="status-offline"><i class="fas fa-exclamation-triangle"></i> ESP32 DESCONECTADO</span>`;
@@ -159,8 +160,7 @@
             } catch (e) {}
         }
 
-        // 2. FORMATEO DE FECHA (Exactamente como pediste)
-        function formatFecha(iso) {
+        function formatHora(iso) {
             const d = new Date(iso);
             const dia = d.getDate().toString().padStart(2, '0');
             const mes = (d.getMonth() + 1).toString().padStart(2, '0');
@@ -172,7 +172,14 @@
             return `${dia}/${mes}/${anio} ${hh}:${mm}${ampm}`;
         }
 
-        // 3. CARGA DE DATOS (Manejado con strings para mayor fluidez)
+        // Formatea el encabezado del día (Ej: LUNES, 16 DE FEBRERO DE 2026)
+        function formatDiaHeader(iso) {
+            const d = new Date(iso);
+            return d.toLocaleDateString('es-ES', { 
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+            }).toUpperCase();
+        }
+
         async function cargar() {
             try {
                 const response = await fetch('/api/lista-videos');
@@ -183,39 +190,56 @@
 
         function renderizar(videos) {
             const container = document.getElementById('main-content');
-            let htmlFinal = '';
+            container.innerHTML = '';
 
             if (videos.length === 0) {
-                container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:50px;">SIN EVIDENCIAS REGISTRADAS</div>';
+                container.innerHTML = '<div style="text-align:center; padding:50px;">SIN EVIDENCIAS REGISTRADAS</div>';
                 return;
             }
 
-            videos.forEach(file => {
-                const esVideo = file.name.toLowerCase().endsWith('.mp4');
-                const fecha = formatFecha(file.created);
-
-                htmlFinal += `
-                    <div class="card">
-                        <div class="card-visual">
-                            ${esVideo ? 
-                                `<video controls preload="metadata">
-                                    <source src="${file.url}" type="video/mp4">
-                                 </video>` : 
-                                `<div style="padding:40px; text-align:center; color:#94a3b8;"><i class="fas fa-file-video fa-3x"></i><br><small>AVI</small></div>`
-                            }
-                        </div>
-                        <div class="card-info">
-                            <span class="card-tag">Registro Argos</span>
-                            <h4 class="card-title">${fecha}</h4>
-                            <div class="card-footer">
-                                <a href="${file.url}" download target="_blank" class="btn-download"><i class="fas fa-cloud-download-alt"></i> DESCARGAR</a>
-                                <button onclick="eliminar('${file.name}')" class="btn-delete"><i class="fas fa-trash-alt"></i></button>
-                            </div>
-                        </div>
-                    </div>`;
+            // Agrupar videos por fecha
+            const grupos = {};
+            videos.forEach(v => {
+                const dia = formatDiaHeader(v.created);
+                if (!grupos[dia]) grupos[dia] = [];
+                grupos[dia].push(v);
             });
 
-            container.innerHTML = htmlFinal; // Actualización única de DOM para mayor velocidad
+            // Generar HTML por cada grupo
+            for (const [dia, vids] of Object.entries(grupos)) {
+                const section = document.createElement('div');
+                section.className = 'day-section';
+                
+                let htmlHeader = `<div class="day-header">${dia}</div>`;
+                let htmlGrid = `<div class="video-grid">`;
+
+                vids.forEach(file => {
+                    const esVideo = file.name.toLowerCase().endsWith('.mp4');
+                    const horaPretty = formatHora(file.created);
+
+                    htmlGrid += `
+                        <div class="card">
+                            <div class="card-visual">
+                                ${esVideo ? 
+                                    `<video controls preload="metadata"><source src="${file.url}" type="video/mp4"></video>` : 
+                                    `<div style="padding:40px; text-align:center; color:#94a3b8;"><i class="fas fa-file-video fa-3x"></i><br><small>AVI</small></div>`
+                                }
+                            </div>
+                            <div class="card-info">
+                                <span class="card-tag">Registro Argos</span>
+                                <h4 class="card-title">${horaPretty}</h4>
+                                <div class="card-footer">
+                                    <a href="${file.url}" download target="_blank" class="btn-download"><i class="fas fa-cloud-download-alt"></i> DESCARGAR</a>
+                                    <button onclick="eliminar('${file.name}')" class="btn-delete"><i class="fas fa-trash-alt"></i></button>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+
+                htmlGrid += `</div>`;
+                section.innerHTML = htmlHeader + htmlGrid;
+                container.appendChild(section);
+            }
         }
 
         async function eliminar(n) {
