@@ -16,8 +16,8 @@ const supabase = createClient(
     { auth: { persistSession: false } }
 );
 
-// --- VARIABLE GLOBAL TEMPORAL ---
-let ultimaIpEsp32 = "No reportada";
+// --- VARIABLES DE ESTADO ---
+let ultimaIpEsp32 = "Buscando..."; // Se mostrará esto hasta que el ESP32 reporte
 let ultimaActividad = Date.now();
 
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
@@ -31,11 +31,10 @@ app.get('/dashboard', (req, res) => {
 });
 
 // --- RECEPCIÓN DE VIDEO (ESP32) ---
-// Optimizamos para capturar la IP del remitente automáticamente
 app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50mb' }), async (req, res) => {
     console.log("📥 [SISTEMA] Recibiendo video...");
     
-    // Detectar IP automáticamente si no viene por query
+    // Captura automática de IP durante la subida
     const ipRemitente = req.query.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     ultimaIpEsp32 = ipRemitente.replace('::ffff:', ''); 
     ultimaActividad = Date.now();
@@ -43,8 +42,6 @@ app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50
     const id = Date.now();
     const aviPath = `/tmp/in_${id}.avi`;
     const mp4Path = `/tmp/out_${id}.mp4`;
-
-    // Nombre de archivo con IP integrada para que el dashboard la lea
     const nombreFinal = `evidencia_${id}_${ultimaIpEsp32.replace(/\./g, '-')}`;
 
     try {
@@ -84,25 +81,26 @@ app.post('/receptor', express.raw({ type: 'application/octet-stream', limit: '50
     } catch (err) { res.status(500).send("ERR_SERVER"); }
 });
 
-// --- GESTIÓN DE IP ---
+// --- GESTIÓN DE IP (ESTO ES LO QUE LLAMA EL ESP32 AL ENCENDER) ---
 app.get('/log_ip', (req, res) => {
     const ip = req.query.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     if (ip) {
         ultimaIpEsp32 = ip.replace('::ffff:', '');
         ultimaActividad = Date.now();
-        console.log(`📡 [DISPOSITIVO] IP Actualizada: ${ultimaIpEsp32}`);
+        console.log(`📡 [DISPOSITIVO] IP Registrada al inicio: ${ultimaIpEsp32}`);
         res.status(200).send("IP_REGISTRADA");
     } else { res.status(400).send("FALTA_IP"); }
 });
 
-// Esta es la ruta que consultará tu Dashboard
+// --- CONSULTA PARA EL ENCABEZADO DEL DASHBOARD ---
 app.get('/get_esp_ip', (req, res) => {
-    const haceCuanto = (Date.now() - ultimaActividad) / 1000 / 60;
-    if (haceCuanto > 10) { // Si no hay señales en 10 min, está offline
-        res.json({ ip: "OFFLINE", status: "offline" });
-    } else {
-        res.json({ ip: ultimaIpEsp32, status: "online" });
-    }
+    // Hemos quitado el límite de 10 minutos para que la IP no se borre nunca.
+    // Solo cambiará cuando el ESP32 mande una nueva.
+    res.json({ 
+        ip: ultimaIpEsp32, 
+        status: "online",
+        last_update: new Date(ultimaActividad).toLocaleTimeString() 
+    });
 });
 
 app.get('/api/lista-videos', async (req, res) => {
@@ -122,5 +120,5 @@ app.get('/api/lista-videos', async (req, res) => {
 app.get('*', (req, res) => { res.redirect('/'); });
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🚀 SERVIDOR ARGOS UNIFICADO`);
+    console.log(`\n🚀 SERVIDOR ARGOS OPERATIVO EN PUERTO ${PORT}`);
 });
