@@ -142,54 +142,65 @@
             }
         }
 
-        function renderizar(videos) {
-            const mainContent = document.getElementById('main-content');
-            mainContent.innerHTML = '';
-            document.getElementById('msg').innerText = `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS`;
+        // ... (resto del código anterior se mantiene igual)
 
-            const grupos = {};
-            videos.forEach(item => {
-                const f = new Date(item.fecha_creacion).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-                if (!grupos[f]) grupos[f] = [];
-                grupos[f].push(item);
-            });
+function renderizar(videos) {
+    const mainContent = document.getElementById('main-content');
+    mainContent.innerHTML = '';
+    document.getElementById('msg').innerText = `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS`;
 
-            for (const [fecha, vids] of Object.entries(grupos)) {
-                let section = `<div class="date-section"><h4 class="date-header"><i class="fas fa-calendar-day"></i> ${fecha}</h4><div class="video-grid">`;
-                vids.forEach(item => {
-                    const esMp4 = item.nombre_archivo.toLowerCase().endsWith('.mp4');
-                    
-                    section += `
-                        <div class="card">
-                            <div class="video-container">
-                                ${esMp4 ? 
-                                    `<video controls preload="metadata">
-                                        <source src="${item.url_video}" type="video/mp4">
-                                        Tu navegador no soporta video.
-                                     </video>` : 
-                                    `<div class="avi-placeholder">
-                                        <i class="fas fa-file-video"></i>
-                                        <span>FORMATO AVI (Descargar para ver)</span>
-                                     </div>`
-                                }
-                            </div>
-                            <div class="card-info">
-                                <div class="card-tag">CAPTURA SEGURA</div>
-                                <h4 class="card-title">${item.nombre_visible}</h4>
-                                <div class="card-actions">
-                                    <a href="${item.url_video}" download target="_blank" class="btn-download">
-                                        <i class="fas fa-download"></i> DESCARGAR
-                                    </a>
-                                    <button onclick="eliminar('${item.nombre_archivo}')" class="btn-delete">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>`;
-                });
-                mainContent.innerHTML += section + `</div></div>`;
-            }
-        }
+    const grupos = {};
+    videos.forEach(item => {
+        const f = new Date(item.fecha_creacion).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+        if (!grupos[f]) grupos[f] = [];
+        grupos[f].push(item);
+    });
+
+    for (const [fecha, vids] of Object.entries(grupos)) {
+        let section = `<div class="date-section"><h4 class="date-header"><i class="fas fa-calendar-day"></i> ${fecha}</h4><div class="video-grid">`;
+        vids.forEach(item => {
+            const esMp4 = item.nombre_archivo.toLowerCase().endsWith('.mp4');
+            
+            // Lógica para extraer o asignar la IP
+            // Si tu ESP32 envía la IP en el nombre (ej: 16022026_1730_192.168.1.15.mp4)
+            const partes = item.nombre_archivo.split('_');
+            const ipDetectada = partes.length > 2 ? partes[2].replace('.mp4', '').replace('.avi', '') : "192.168.1.XX"; 
+
+            section += `
+                <div class="card">
+                    <div class="video-container">
+                        ${esMp4 ? 
+                            `<video controls preload="metadata">
+                                <source src="${item.url_video}" type="video/mp4">
+                             </video>` : 
+                            `<div class="avi-placeholder">
+                                <i class="fas fa-file-video"></i>
+                                <span>FORMATO AVI</span>
+                             </div>`
+                        }
+                    </div>
+                    <div class="card-info">
+                        <div class="card-tag">CAPTURA SEGURA</div>
+                        <h4 class="card-title" style="margin-bottom: 5px;">${item.nombre_visible}</h4>
+                        
+                        <div style="font-size: 0.75rem; color: var(--azul-claro); font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-network-wired"></i> IP ORIGEN: ${ipDetectada}
+                        </div>
+
+                        <div class="card-actions">
+                            <a href="${item.url_video}" download target="_blank" class="btn-download">
+                                <i class="fas fa-download"></i> DESCARGAR
+                            </a>
+                            <button onclick="eliminar('${item.nombre_archivo}')" class="btn-delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+        });
+        mainContent.innerHTML += section + `</div></div>`;
+    }
+}
 
         function filtrar() {
             const bus = document.getElementById('searchInput').value.toLowerCase();
@@ -215,3 +226,4 @@
     </script>
 </body>
 </html>
+
