@@ -1,114 +1,187 @@
-<!DOCTYPE html>
+en login haz el mismo diseño que te pasé;  <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA ARGOS - Inteligencia de Seguridad</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --azul-argos: #003366;
-            --azul-claro: #004a94;
-            --fondo: #f0f2f5;
-            --texto: #1e293b;
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARGOS CORE - Intelligence System</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --azul-argos: #001f3f;
+            --azul-neon: #0074D9;
+            --cyber-green: #2ECC40;
+            --fondo: #050505;
+        }
+        
+        body { 
+            font-family: 'Consolas', monospace; 
+            background: var(--fondo); 
+            color: #fff; 
+            margin: 0; 
+        }
 
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: var(--fondo); 
-            margin: 0; 
-            color: var(--texto);
-        }
+        header {
+            border-bottom: 2px solid var(--azul-neon);
+            padding: 20px;
+            text-align: center;
+            background: rgba(0, 116, 217, 0.1);
+        }
 
-        header {
-            background: linear-gradient(135deg, var(--azul-argos) 0%, var(--azul-claro) 100%);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: relative;
-        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
 
-        .btn-salir {
-            position: absolute;
-            right: 30px; top: 30px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid white;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
+        /* GRID DE CÁMARAS */
+        .camera-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
 
-        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .camera-card {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
 
-        .toolbar {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
-            display: flex; gap: 15px; margin-bottom: 25px; align-items: center;
-        }
+        .camera-card:hover { border-color: var(--azul-neon); }
 
-        .btn-stats {
-            background: var(--azul-argos); color: white; border: none;
-            padding: 10px 20px; border-radius: 6px; font-weight: bold;
-        }
+        .video-container {
+            width: 100%;
+            height: 220px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 25px;
-        }
+        /* Forzamos que el video ocupe el espacio sin desordenar */
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Evita que se estire feo */
+            background: #000;
+        }
 
-        .card {
-            background: white; border-radius: 12px; overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
+        .info-panel {
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            font-size: 0.85rem;
+        }
 
-        .video-box {
-            background: #000; height: 180px; display: flex;
-            flex-direction: column; align-items: center; justify-content: center;
-            color: #ccc; font-size: 0.8rem; text-align: center;
-        }
+        .status-tag {
+            color: var(--cyber-green);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
 
-        .card-info { padding: 20px; }
-        .tag { color: #92400e; background: #fef3c7; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
-        .date { font-weight: bold; margin: 10px 0; }
-        
-        .btn-dl { 
-            display: block; width: 100%; background: var(--azul-argos); 
-            color: white; text-align: center; padding: 10px; 
-            border-radius: 6px; text-decoration: none; font-weight: bold;
-        }
-    </style>
+        .btn-action {
+            display: inline-block;
+            padding: 8px 12px;
+            background: var(--azul-neon);
+            color: white;
+            text-decoration: none;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            margin-right: 5px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-delete { background: #FF4136; }
+
+        .timestamp { color: #aaa; font-size: 0.75rem; }
+
+        /* Efecto de escaneo para el estilo universidad/seguridad */
+        .scanline {
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 255, 0, 0.1);
+            position: absolute;
+            top: 0;
+            animation: scan 4s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+    </style>
 </head>
 <body>
 
 <header>
-    <button class="btn-salir" onclick="sessionStorage.clear(); window.location.href='/';"> <i class="fas fa-power-off"></i> SALIR</button>
-    <h1>SISTEMA ARGOS CORE</h1>
-    <p>CENTRO DE INTELIGENCIA Y EVIDENCIAS</p>
+    <h1 style="margin:0; letter-spacing: 5px;">ARGOS <span style="color:var(--azul-neon)">INTELLIGENCE</span></h1>
+    <p style="font-size: 0.8rem; color: var(--azul-neon)">SISTEMA DE MONITOREO UNIVERSITARIO - MODO PRUEBAS</p>
 </header>
 
 <div class="container">
-    <div class="toolbar">
-        <button class="btn-stats"><i class="fas fa-chart-line"></i> ANÁLISIS DE DATOS</button>
-        <input type="text" placeholder="Buscar video..." style="flex:1; padding:10px; border:1px solid #ddd; border-radius:6px;">
-    </div>
-
-    <div id="grid-evidencias" class="grid">
-        </div>
+    <div id="msg" style="margin-bottom: 20px; color: var(--azul-neon)"> > Inicializando protocolo de sincronización...</div>
+    <div id="main-content" class="camera-grid"></div>
 </div>
 
 <script>
-    // Candado de seguridad
-    if (sessionStorage.getItem("argos_sesion") !== "true") { window.location.href = "/"; }
+    const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
+    const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk";
+    const BUCKET = "videos-receptor";
 
-    // Aquí iría tu código de Supabase para listar los videos...
-    // (Usa el que ya tienes funcionando para obtener los datos)
+    const _supabase = supabase.createClient(URL_SB, KEY_SB);
+
+    async function obtenerEvidencias() {
+        const { data, error } = await _supabase.storage.from(BUCKET).list('videos', {
+            limit: 100,
+            sortBy: { column: 'name', order: 'desc' }
+        });
+
+        if (error) return;
+
+        const container = document.getElementById('main-content');
+        container.innerHTML = '';
+
+        data.forEach(file => {
+            if (file.name === ".emptyFolderPlaceholder") return;
+
+            const { data: urlData } = _supabase.storage.from(BUCKET).getPublicUrl(`videos/${file.name}`);
+            
+            const card = `
+                <div class="camera-card">
+                    <div class="scanline"></div>
+                    <div class="video-container">
+                        <video controls muted poster="https://via.placeholder.com/400x220/000000/0074D9?text=CARGANDO+STREAM...">
+                            <source src="${urlData.publicUrl}" type="video/mp4">
+                            Format Not Supported
+                        </video>
+                    </div>
+                    <div class="info-panel">
+                        <div class="status-tag"><i class="fas fa-circle"></i> EN LINEA / EVIDENCIA</div>
+                        <div class="timestamp">ARCHIVO: ${file.name}</div>
+                        <div class="timestamp">FECHA: ${new Date(file.created_at).toLocaleString()}</div>
+                        <div style="margin-top:15px;">
+                            <a href="${urlData.publicUrl}" download class="btn-action"><i class="fas fa-download"></i> EXPORTAR</a>
+                            <button onclick="eliminar('${file.name}')" class="btn-action btn-delete"><i class="fas fa-trash"></i> BORRAR</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += card;
+        });
+        document.getElementById('msg').innerText = ` > SINCRO OK: ${data.length} REGISTROS ENCONTRADOS`;
+    }
+
+    async function eliminar(nombre) {
+        if(!confirm("¿CONFIRMA ELIMINACIÓN DE EVIDENCIA?")) return;
+        await _supabase.storage.from(BUCKET).remove([`videos/${nombre}`]);
+        obtenerEvidencias();
+    }
+
+    obtenerEvidencias();
+    // Refresco cada 15 segundos para las pruebas
+    setInterval(obtenerEvidencias, 15000);
 </script>
 
 </body>
