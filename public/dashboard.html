@@ -10,85 +10,96 @@
         :root {
             --azul-argos: #003366;
             --azul-claro: #004a94;
-            --verde-ok: #10b981;
-            --rojo-off: #ef4444;
-            --fondo: #f0f2f5;
+            --fondo: #f4f7f9;
             --texto: #1e293b;
+            --verde-tag: #10b981;
         }
         
-        body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; color: var(--texto); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--fondo); margin: 0; color: var(--texto); }
 
         header {
             background: var(--azul-argos);
-            color: white; padding: 25px 30px; text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            color: white; padding: 30px 20px; text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        header h1 { margin: 0; font-size: 1.8rem; letter-spacing: 2px; font-weight: 700; text-transform: uppercase; }
+        header h1 { margin: 0; font-size: 1.8rem; letter-spacing: 2px; font-weight: 800; text-transform: uppercase; }
+        header p { margin: 5px 0 0; font-size: 0.85rem; opacity: 0.8; letter-spacing: 1px; }
 
-        /* EL INDICADOR DE IP QUE MARCASTE EN EL CÍRCULO ROJO */
-        #ip-status {
-            margin-top: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-            min-height: 1.2em;
-        }
+        #ip-status { margin-top: 15px; font-weight: 600; font-size: 0.95rem; }
 
-        .container { max-width: 1200px; margin: 25px auto; padding: 0 20px; }
-        
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
         .toolbar {
-            background: white; border-radius: 8px; padding: 15px;
-            display: flex; gap: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 25px;
+            background: white; border-radius: 10px; padding: 15px;
+            display: flex; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 25px; align-items: center;
+        }
+        
+        .btn-analisis {
+            background: var(--azul-argos); color: white; border: none;
+            padding: 10px 20px; border-radius: 6px; font-weight: 600;
+            font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 8px;
         }
 
-        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        
-        .card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #eef2f7; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .search-container { flex: 1; position: relative; }
+        .search-container input {
+            width: 100%; padding: 10px 15px; border-radius: 6px;
+            border: 1px solid #e2e8f0; box-sizing: border-box;
+        }
 
+        .date-group-header {
+            color: var(--azul-argos); border-left: 5px solid var(--azul-claro);
+            padding-left: 15px; margin: 40px 0 20px; font-size: 1.1rem;
+            font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 10px;
+        }
+
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+        
+        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eef2f7; }
+        
         .card-visual { 
             height: 160px; background: #f8fafc; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; color: #94a3b8; border-bottom: 1px solid #f1f5f9;
+            align-items: center; justify-content: center; color: #94a3b8;
         }
-        .card-visual i { font-size: 3.5rem; }
-        
-        .card-info { padding: 15px; }
-        .card-tag { display: inline-block; background: #ecfdf5; color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; margin-bottom: 10px; text-transform: uppercase; }
-        .card-title { font-size: 0.9rem; margin: 0 0 12px; color: var(--azul-argos); font-weight: 700; line-height: 1.4; }
+        .card-visual i { font-size: 3rem; margin-bottom: 10px; }
+        .card-visual span { font-size: 0.7rem; font-weight: 700; color: #64748b; }
 
-        .card-footer { display: flex; gap: 8px; align-items: center; }
+        .card-info { padding: 20px; }
+        .card-tag { 
+            display: inline-block; background: #ecfdf5; color: var(--verde-tag); 
+            padding: 4px 10px; border-radius: 4px; font-size: 0.65rem; 
+            font-weight: 800; margin-bottom: 12px; text-transform: uppercase; 
+        }
+        .card-title { font-size: 0.95rem; margin: 0 0 15px; color: var(--azul-argos); font-weight: 700; }
+
+        .card-footer { display: flex; gap: 8px; }
         .btn-download { 
             background: var(--azul-argos); color: white; text-decoration: none; 
-            padding: 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 800;
+            padding: 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;
             display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1;
         }
-        .btn-delete { background: #fff; color: #ef4444; border: 1px solid #fee2e2; padding: 9px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-        .btn-delete:hover { background: #fee2e2; }
-
-        .status-text { display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-delete { background: #fff; color: #ef4444; border: 1px solid #fee2e2; padding: 10px; border-radius: 6px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <header>
         <h1>SISTEMA ARGOS CORE</h1>
-        <div id="ip-status">
-            <span style="opacity: 0.6; font-size: 0.8rem;"><i class="fas fa-spinner fa-spin"></i> VERIFICANDO SISTEMA...</span>
-        </div>
+        <p>CENTRO DE INTELIGENCIA Y EVIDENCIAS</p>
+        <div id="ip-status"></div>
     </header>
 
     <div class="container">
         <div class="toolbar">
-            <div style="position:relative; flex:1;">
-                <i class="fas fa-search" style="position:absolute; left:12px; top:12px; color:#94a3b8;"></i>
-                <input type="text" id="searchInput" placeholder="Buscar evidencia..." onkeyup="filtrar()" style="width:100%; padding:10px 10px 10px 35px; border-radius:6px; border:1px solid #e2e8f0; box-sizing:border-box;">
+            <button class="btn-analisis"><i class="fas fa-chart-line"></i> ANÁLISIS DE DATOS</button>
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Buscar por fecha u hora..." onkeyup="filtrar()">
             </div>
-            <input type="date" id="dateFilter" onchange="filtrar()" style="padding:9px; border-radius:6px; border:1px solid #e2e8f0; color:#64748b;">
+            <input type="date" id="dateFilter" onchange="filtrar()" style="padding:9px; border-radius:6px; border:1px solid #e2e8f0;">
         </div>
 
-        <div id="status-msg" style="margin-bottom:15px; font-size:0.8rem; color:#64748b; font-weight:600; text-transform:uppercase;"></div>
-        <div id="main-content" class="video-grid"></div>
+        <div id="status-summary" style="margin-bottom:10px; font-size:0.85rem; color:#64748b; font-weight:700;"></div>
+        <div id="main-content"></div>
     </div>
 
     <script>
@@ -107,81 +118,76 @@
 
                 if (error) throw error;
 
-                // Solo archivos de video
                 todosLosVideos = data.filter(f => f.name.toLowerCase().endsWith('.avi') || f.name.toLowerCase().endsWith('.mp4'));
-
-                actualizarEstadoSistema(todosLosVideos);
+                
+                actualizarHeader(todosLosVideos);
                 renderizar(todosLosVideos);
-
-            } catch (err) {
-                console.error("Error cargando datos:", err);
-            }
+            } catch (err) { console.error(err); }
         }
 
-        function actualizarEstadoSistema(archivos) {
+        function actualizarHeader(archivos) {
             const display = document.getElementById('ip-status');
-            
             if (archivos.length > 0) {
                 const ultimo = archivos[0];
-                const fechaCarga = new Date(ultimo.created_at);
-                const ahora = new Date();
-                const diffMinutos = (ahora - fechaCarga) / 1000 / 60;
-
-                // Si se detecta actividad en los últimos 15 minutos
-                if (diffMinutos < 15) {
-                    const partes = ultimo.name.split('_');
-                    // Busca una parte que tenga puntos (formato IP)
-                    let ip = partes.find(p => p.split('.').length === 4) || "DETECTADA";
-                    ip = ip.replace('.avi', '').replace('.mp4', '');
-                    
-                    display.innerHTML = `<span class="status-text" style="color: var(--verde-ok)">
-                        <i class="fas fa-signal"></i> IP: ${ip}
-                    </span>`;
+                const diffMin = (new Date() - new Date(ultimo.created_at)) / 1000 / 60;
+                if (diffMin < 15) {
+                    const ip = ultimo.name.split('_').find(p => p.includes('.')) || "DETECTADA";
+                    display.innerHTML = `<span style="color: #10b981"><i class="fas fa-network-wired"></i> IP: ${ip.replace('.avi','').replace('.mp4','')}</span>`;
                 } else {
-                    display.innerHTML = `<span class="status-text" style="color: var(--rojo-off); opacity: 0.8;">
-                        <i class="fas fa-power-off"></i> OFFLINE
-                    </span>`;
+                    display.innerHTML = `<span style="color: #ff4444"><i class="fas fa-power-off"></i> OFFLINE</span>`;
                 }
-            } else {
-                display.innerHTML = `<span class="status-text" style="color: var(--rojo-off)">OFFLINE</span>`;
             }
         }
 
         function renderizar(videos) {
             const container = document.getElementById('main-content');
-            const msg = document.getElementById('status-msg');
             container.innerHTML = '';
-            msg.innerText = `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS ENCONTRADAS`;
+            document.getElementById('status-summary').innerText = `SISTEMA ACTIVO: ${videos.length} EVIDENCIAS ENCONTRADAS`;
 
-            videos.forEach(file => {
-                const { data: urlData } = _supabase.storage.from(BUCKET).getPublicUrl(file.name);
-                const esAvi = file.name.toLowerCase().endsWith('.avi');
-                
-                const card = `
-                    <div class="card">
-                        <div class="card-visual">
-                            <i class="fas ${esAvi ? 'fa-file-video' : 'fa-play-circle'}"></i>
-                            <span style="font-size:0.65rem; font-weight:800; margin-top:10px; color:#cbd5e1;">FORMATO ${esAvi ? 'AVI' : 'MP4'}</span>
-                        </div>
-                        <div class="card-info">
-                            <div class="card-tag">CAPTURA SEGURA</div>
-                            <h4 class="card-title">${file.name}</h4>
-                            <div class="card-footer">
-                                <a href="${urlData.publicUrl}" download target="_blank" class="btn-download">
-                                    <i class="fas fa-download"></i> DESCARGAR
-                                </a>
-                                <button onclick="eliminar('${file.name}')" class="btn-delete" title="Eliminar">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>`;
-                container.innerHTML += card;
+            // Agrupar por fecha
+            const grupos = {};
+            videos.forEach(v => {
+                const fechaCrea = new Date(v.created_at);
+                const opciones = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+                const diaStr = fechaCrea.toLocaleDateString('es-ES', opciones);
+                if (!grupos[diaStr]) grupos[diaStr] = [];
+                grupos[diaStr].push(v);
             });
+
+            for (const [dia, vids] of Object.entries(grupos)) {
+                let html = `<div class="date-group-header"><i class="fas fa-calendar-alt"></i> ${dia.toUpperCase()}</div><div class="video-grid">`;
+                
+                vids.forEach(file => {
+                    const { data: urlData } = _supabase.storage.from(BUCKET).getPublicUrl(file.name);
+                    const fechaArchivo = new Date(file.created_at).toLocaleString('es-ES', {
+                        day: '2-digit', month: '2-digit', year: 'numeric', 
+                        hour: '2-digit', minute: '2-digit', hour12: true
+                    });
+
+                    html += `
+                        <div class="card">
+                            <div class="card-visual">
+                                <i class="fas fa-file-video"></i>
+                                <span>FORMATO AVI (EVIDENCIA)</span>
+                            </div>
+                            <div class="card-info">
+                                <div class="card-tag">REGISTRO SEGURO</div>
+                                <h4 class="card-title">${fechaArchivo}</h4>
+                                <div class="card-footer">
+                                    <a href="${urlData.publicUrl}" download target="_blank" class="btn-download">
+                                        <i class="fas fa-download"></i> DESCARGAR
+                                    </a>
+                                    <button onclick="eliminar('${file.name}')" class="btn-delete"><i class="fas fa-trash-alt"></i></button>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                container.innerHTML += html + `</div>`;
+            }
         }
 
         async function eliminar(n) {
-            if (confirm("¿Seguro que desea eliminar esta evidencia de forma permanente?")) {
+            if (confirm("¿Eliminar evidencia?")) {
                 await _supabase.storage.from(BUCKET).remove([n]);
                 cargar();
             }
@@ -191,15 +197,15 @@
             const bus = document.getElementById('searchInput').value.toLowerCase();
             const fec = document.getElementById('dateFilter').value;
             const fil = todosLosVideos.filter(v => {
-                const coincideNombre = v.name.toLowerCase().includes(bus);
-                const coincideFecha = !fec || v.created_at.startsWith(fec);
-                return coincideNombre && coincideFecha;
+                const nombreMatch = v.name.toLowerCase().includes(bus);
+                const fechaMatch = !fec || v.created_at.startsWith(fec);
+                return nombreMatch && fechaMatch;
             });
             renderizar(fil);
         }
 
         cargar();
-        setInterval(cargar, 30000); // Actualiza cada 30 segundos
+        setInterval(cargar, 30000);
     </script>
 </body>
 </html>
