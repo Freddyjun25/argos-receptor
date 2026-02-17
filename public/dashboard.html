@@ -147,6 +147,7 @@
     </div>
 
     <script>
+        // CONFIGURACIÓN SUPABASE
         const URL_SB = "https://evnfyrkpfvlonlfkhbkr.supabase.co";
         const KEY_SB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bmZ5cmtwZnZsb25sZmtoYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzcwMTgsImV4cCI6MjA4NTY1MzAxOH0.jA6qZpOxZkvC2TgoR49knwnlKnsaBQnauhA41-1slUk";
         const BUCKET_NAME = "videos-receptor";
@@ -169,7 +170,7 @@
                             .from(BUCKET_NAME)
                             .getPublicUrl(`videos/${file.name}`);
                         
-                        // PROCESAMIENTO DE NOMBRE A: 01/01/2025 12:20 PM
+                        // PROCESAMIENTO DE NOMBRE A FORMATO LEÍBLE
                         const partes = file.name.replace('.avi', '').split('_');
                         let formateado = file.name;
 
@@ -274,14 +275,19 @@
 
         function toggleStats() {
             const p = document.getElementById('statsPanel');
-            p.style.display = p.style.display === 'block' ? 'none' : 'block';
+            p.style.display = (p.style.display === 'block') ? 'none' : 'block';
         }
 
         function cerrarSesion() {
-            if(confirm("¿Desea cerrar la sesión del sistema?")) window.location.reload();
+            if(confirm("¿Desea cerrar la sesión del sistema?")) {
+                // Limpia cualquier rastro y vuelve al login (raíz)
+                window.location.href = "/";
+            }
         }
 
+        // Ejecución inicial
         cargar();
+        // Auto-actualizar cada minuto
         setInterval(cargar, 60000); 
     </script>
 </body>
