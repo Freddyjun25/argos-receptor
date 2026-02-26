@@ -116,29 +116,28 @@
 
         const _supabase = supabase.createClient(URL_SB, KEY_SB);
 
-        // --- BLOQUE DE SEGURIDAD: COMPROBAR SESIÓN ---
         async function protegerRuta() {
             const { data: { session }, error } = await _supabase.auth.getSession();
-            if (!session || error) {
-                // Si no hay sesión, redirige inmediatamente al login
-                window.location.href = 'login.html';
-            }
+            if (!session || error) { window.location.href = 'login.html'; }
         }
-        protegerRuta(); // Se ejecuta al cargar el script
+        protegerRuta();
 
         async function salir() {
-            const { error } = await _supabase.auth.signOut();
+            await _supabase.auth.signOut();
             window.location.href = 'login.html';
         }
-        // ---------------------------------------------
 
         let todosLosVideos = [];
         let vistaActual = 'grid';
+        let ultimaIpDetectada = "";
 
         async function checkSystemStatus() {
             try {
                 const res = await fetch('/get_esp_ip');
                 const data = await res.json();
+                if (data.ip === ultimaIpDetectada) return; // Si la IP no cambió, no toques el DOM
+                
+                ultimaIpDetectada = data.ip;
                 const indicator = document.getElementById('ip-indicator');
                 
                 if (data.ip && data.ip !== "Buscando..." && data.ip !== "No reportada") {
@@ -154,7 +153,6 @@
             } catch (e) { }
         }
 
-        // Resto de tus funciones (formatHora, formatDiaHeader, setVista, cargar, renderizar, eliminar, filtrar)...
         function formatHora(iso) {
             const d = new Date(iso);
             let hh = d.getHours();
@@ -171,6 +169,7 @@
         }
 
         function setVista(modo) {
+            if(vistaActual === modo) return;
             vistaActual = modo;
             document.getElementById('btnGrid').classList.toggle('active', modo === 'grid');
             document.getElementById('btnList').classList.toggle('active', modo === 'list');
@@ -180,27 +179,46 @@
         async function cargar() {
             try {
                 const response = await fetch('/api/lista-videos');
-                todosLosVideos = await response.json();
-                renderizar(todosLosVideos);
+                const nuevosVideos = await response.json();
+                
+                // --- ANTI-CORTE: Comparar si la lista cambió ---
+                // Solo renderizamos si el número de videos cambió o si hay nombres distintos
+                const listaCambio = nuevosVideos.length !== todosLosVideos.length || 
+                                    nuevosVideos.some((v, i) => v.name !== (todosLosVideos[i]?.name));
+
+                if (listaCambio) {
+                    todosLosVideos = nuevosVideos;
+                    renderizar(todosLosVideos);
+                }
             } catch(e) {}
         }
 
         function renderizar(videos) {
+            // Verificamos si hay algún video reproduciéndose antes de limpiar
+            const videosReproduciendo = Array.from(document.querySelectorAll('video')).some(v => !v.paused);
+            if (videosReproduciendo) {
+                console.log("Actualización pospuesta: Hay un video en reproducción.");
+                return; // No interrumpir al usuario
+            }
+
             const container = document.getElementById('main-content');
             container.innerHTML = '';
             const grupos = {};
+            
             videos.forEach(v => {
                 const dia = formatDiaHeader(v.created);
                 if (!grupos[dia]) grupos[dia] = [];
                 grupos[dia].push(v);
             });
+
             for (const [dia, vids] of Object.entries(grupos)) {
                 const section = document.createElement('div');
                 section.className = 'day-section';
-                let htmlGrid = `<div class="${vistaActual === 'grid' ? 'video-grid' : 'video-list'}">`;
+                let htmlContent = `<div class="${vistaActual === 'grid' ? 'video-grid' : 'video-list'}">`;
+                
                 vids.forEach(file => {
-                    const esVideo = file.name.toLowerCase().endsWith('.mp4');
-                    htmlGrid += `
+                    const esVideo = file.name.toLowerCase().endsWith('.mp4') || file.name.toLowerCase().endsWith('.avi');
+                    htmlContent += `
                         <div class="card">
                             <div class="card-visual">
                                 ${esVideo ? `<video controls preload="metadata"><source src="${file.url}" type="video/mp4"></video>` : `<div style="padding:20px;text-align:center"><i class="fas fa-file-video fa-2x"></i></div>`}
@@ -214,13 +232,17 @@
                             </div>
                         </div>`;
                 });
-                section.innerHTML = `<div class="day-header">${dia}</div>` + htmlGrid + `</div>`;
+                section.innerHTML = `<div class="day-header">${dia}</div>` + htmlContent + `</div>`;
                 container.appendChild(section);
             }
         }
 
         async function eliminar(n) {
-            if (confirm("¿Borrar evidencia?")) { await _supabase.storage.from(BUCKET).remove([n]); cargar(); }
+            if (confirm("¿Borrar evidencia?")) { 
+                await _supabase.storage.from(BUCKET).remove([n]); 
+                todosLosVideos = []; // Reset para forzar recarga
+                cargar(); 
+            }
         }
 
         function filtrar() {
@@ -230,8 +252,12 @@
             renderizar(res);
         }
 
-        checkSystemStatus(); cargar();
-        setInterval(checkSystemStatus, 5000); setInterval(cargar, 30000);
+        checkSystemStatus(); 
+        cargar();
+        
+        // Intervalos optimizados
+        setInterval(checkSystemStatus, 10000); // IP cada 10 seg
+        setInterval(cargar, 30000);            // Lista cada 30 seg (solo si no hay video activo)
     </script>
 </body>
 </html>
