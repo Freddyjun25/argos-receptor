@@ -16,6 +16,33 @@
             --rojo: #ef4444;
         }
 
+        /* Estilos para selección múltiple */
+        .card-select {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 60;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--azul-argos);
+        }
+
+        .btn-bulk-delete {
+            background: var(--rojo);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            display: none; /* Se activa por JS */
+            gap: 8px;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+        .btn-bulk-delete:hover { background: #b91c1c; }
+
         body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; color: var(--texto); }
         
         header {
@@ -24,7 +51,6 @@
         }
         header h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; text-transform: uppercase; }
 
-        /* BOTÓN CERRAR SESIÓN */
         .btn-logout {
             position: absolute; right: 20px; top: 25px;
             background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);
@@ -68,7 +94,7 @@
         }
 
         .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; }
-        .video-grid .card:hover { transform: scale(1.12); z-index: 50; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
+        .video-grid .card:hover { transform: scale(1.05); z-index: 50; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
 
         .video-list { display: flex; flex-direction: column; gap: 10px; }
         .video-list .card { display: flex; flex-direction: row; height: 100px; align-items: center; }
@@ -99,6 +125,10 @@
 
     <div class="container">
         <div class="toolbar">
+            <button id="btnBulkDelete" class="btn-bulk-delete" onclick="eliminarVarios()">
+                <i class="fas fa-trash-sweep"></i> BORRAR (<span id="countSelect">0</span>)
+            </button>
+
             <button id="btnGrid" class="btn-view active" onclick="setVista('grid')"><i class="fas fa-th-large"></i></button>
             <button id="btnList" class="btn-view" onclick="setVista('list')"><i class="fas fa-list"></i></button>
             <div class="search-container">
@@ -135,7 +165,7 @@
             try {
                 const res = await fetch('/get_esp_ip');
                 const data = await res.json();
-                if (data.ip === ultimaIpDetectada) return; // Si la IP no cambió, no toques el DOM
+                if (data.ip === ultimaIpDetectada) return; 
                 
                 ultimaIpDetectada = data.ip;
                 const indicator = document.getElementById('ip-indicator');
@@ -181,8 +211,6 @@
                 const response = await fetch('/api/lista-videos');
                 const nuevosVideos = await response.json();
                 
-                // --- ANTI-CORTE: Comparar si la lista cambió ---
-                // Solo renderizamos si el número de videos cambió o si hay nombres distintos
                 const listaCambio = nuevosVideos.length !== todosLosVideos.length || 
                                     nuevosVideos.some((v, i) => v.name !== (todosLosVideos[i]?.name));
 
@@ -194,12 +222,8 @@
         }
 
         function renderizar(videos) {
-            // Verificamos si hay algún video reproduciéndose antes de limpiar
             const videosReproduciendo = Array.from(document.querySelectorAll('video')).some(v => !v.paused);
-            if (videosReproduciendo) {
-                console.log("Actualización pospuesta: Hay un video en reproducción.");
-                return; // No interrumpir al usuario
-            }
+            if (videosReproduciendo) return;
 
             const container = document.getElementById('main-content');
             container.innerHTML = '';
@@ -220,6 +244,7 @@
                     const esVideo = file.name.toLowerCase().endsWith('.mp4') || file.name.toLowerCase().endsWith('.avi');
                     htmlContent += `
                         <div class="card">
+                            <input type="checkbox" class="card-select" value="${file.name}" onchange="actualizarContador()">
                             <div class="card-visual">
                                 ${esVideo ? `<video controls preload="metadata"><source src="${file.url}" type="video/mp4"></video>` : `<div style="padding:20px;text-align:center"><i class="fas fa-file-video fa-2x"></i></div>`}
                             </div>
@@ -235,12 +260,40 @@
                 section.innerHTML = `<div class="day-header">${dia}</div>` + htmlContent + `</div>`;
                 container.appendChild(section);
             }
+            actualizarContador();
+        }
+
+        // LÓGICA DE SELECCIÓN MÚLTIPLE
+        function actualizarContador() {
+            const seleccionados = document.querySelectorAll('.card-select:checked');
+            const btn = document.getElementById('btnBulkDelete');
+            const countSpan = document.getElementById('countSelect');
+            
+            if (seleccionados.length > 0) {
+                btn.style.display = 'flex';
+                countSpan.innerText = seleccionados.length;
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+
+        async function eliminarVarios() {
+            const seleccionados = Array.from(document.querySelectorAll('.card-select:checked')).map(cb => cb.value);
+            if (confirm(`¿Borrar las ${seleccionados.length} evidencias seleccionadas?`)) {
+                const { error } = await _supabase.storage.from(BUCKET).remove(seleccionados);
+                if (!error) {
+                    todosLosVideos = []; 
+                    cargar();
+                } else {
+                    alert("Error al borrar archivos.");
+                }
+            }
         }
 
         async function eliminar(n) {
             if (confirm("¿Borrar evidencia?")) { 
                 await _supabase.storage.from(BUCKET).remove([n]); 
-                todosLosVideos = []; // Reset para forzar recarga
+                todosLosVideos = []; 
                 cargar(); 
             }
         }
@@ -254,10 +307,8 @@
 
         checkSystemStatus(); 
         cargar();
-        
-        // Intervalos optimizados
-        setInterval(checkSystemStatus, 10000); // IP cada 10 seg
-        setInterval(cargar, 30000);            // Lista cada 30 seg (solo si no hay video activo)
+        setInterval(checkSystemStatus, 10000); 
+        setInterval(cargar, 30000); 
     </script>
 </body>
 </html>
