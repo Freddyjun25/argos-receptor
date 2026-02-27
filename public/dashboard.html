@@ -16,7 +16,6 @@
             --rojo: #ef4444;
         }
 
-        /* Estilos para selección múltiple */
         .card-select {
             position: absolute;
             top: 10px;
@@ -36,7 +35,7 @@
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
-            display: none; /* Se activa por JS */
+            display: none;
             gap: 8px;
             align-items: center;
             font-size: 0.8rem;
@@ -89,8 +88,14 @@
         .day-section { margin-bottom: 40px; }
         .day-header {
             background: #e2e8f0; color: var(--azul-argos); padding: 10px 15px;
-            border-radius: 6px; font-size: 0.9rem; font-weight: 800; margin-bottom: 15px;
+            border-radius: 6px; font-size: 0.8rem; font-weight: 800; margin-bottom: 15px;
             border-left: 6px solid var(--azul-claro); text-transform: uppercase;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        .btn-select-all {
+            background: var(--azul-argos); color: white; border: none;
+            padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.65rem;
         }
 
         .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; }
@@ -210,7 +215,6 @@
             try {
                 const response = await fetch('/api/lista-videos');
                 const nuevosVideos = await response.json();
-                
                 const listaCambio = nuevosVideos.length !== todosLosVideos.length || 
                                     nuevosVideos.some((v, i) => v.name !== (todosLosVideos[i]?.name));
 
@@ -235,9 +239,13 @@
                 grupos[dia].push(v);
             });
 
+            let diaID = 0;
             for (const [dia, vids] of Object.entries(grupos)) {
+                diaID++;
                 const section = document.createElement('div');
                 section.className = 'day-section';
+                section.id = `section-${diaID}`;
+                
                 let htmlContent = `<div class="${vistaActual === 'grid' ? 'video-grid' : 'video-list'}">`;
                 
                 vids.forEach(file => {
@@ -257,13 +265,26 @@
                             </div>
                         </div>`;
                 });
-                section.innerHTML = `<div class="day-header">${dia}</div>` + htmlContent + `</div>`;
+
+                section.innerHTML = `
+                    <div class="day-header">
+                        <span>${dia}</span>
+                        <button class="btn-select-all" onclick="toggleDia('section-${diaID}')">MARCAR TODO EL DÍA</button>
+                    </div>` + htmlContent + `</div>`;
                 container.appendChild(section);
             }
             actualizarContador();
         }
 
-        // LÓGICA DE SELECCIÓN MÚLTIPLE
+        function toggleDia(sectionId) {
+            const section = document.getElementById(sectionId);
+            const checks = section.querySelectorAll('.card-select');
+            // Si hay alguno sin marcar, marcamos todos. Si están todos marcados, desmarcamos.
+            const algunSinMarcar = Array.from(checks).some(c => !c.checked);
+            checks.forEach(c => c.checked = algunSinMarcar);
+            actualizarContador();
+        }
+
         function actualizarContador() {
             const seleccionados = document.querySelectorAll('.card-select:checked');
             const btn = document.getElementById('btnBulkDelete');
